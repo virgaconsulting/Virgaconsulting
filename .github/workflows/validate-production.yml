@@ -22,8 +22,8 @@ jobs:
       - name: Verify release
         run: |
           test -f dist/release.txt
-          grep -q "vfiscal-release-2026-10-03-2.6.4" dist/release.txt
+          grep -q "vfiscal-release-2026-10-03-2.6.5" dist/release.txt
           test -f dist/vfiscal-app.html
           test -f dist/acquista.html
           grep -q "window.VFISCAL_SUPABASE_URL" dist/vfiscal-app.html
-          grep -q "vfiscal-cloudflare-v2.6.4-20261003" dist/sw.js
+          grep -q "vfiscal-cloudflare-v2.6.5-20261003" dist/sw.js
