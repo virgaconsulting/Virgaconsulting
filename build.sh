@@ -196,6 +196,9 @@ cat > "$OUT/_headers" <<'EOF'
 /manifest.webmanifest
   Cache-Control: no-cache, must-revalidate
 
+/release.txt
+  Cache-Control: no-cache, no-store, must-revalidate
+
 /sw.js
   Cache-Control: no-cache, must-revalidate
 
@@ -207,6 +210,10 @@ cat > "$OUT/_headers" <<'EOF'
 
 /vfiscal.html
   Cache-Control: no-cache, must-revalidate
+EOF
+
+cat > "$OUT/release.txt" <<'EOF'
+vfiscal-release-2026-10-03-2.6.1
 EOF
 
 # Host-level redirect virgaconsulting.it -> www.virgaconsulting.it is managed outside Pages _redirects.
