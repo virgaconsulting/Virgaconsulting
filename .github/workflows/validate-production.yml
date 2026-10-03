@@ -46,3 +46,41 @@ jobs:
           curl --fail --silent --show-error --location https://www.virgaconsulting.it/vfiscal-app | grep -q "Area personale"
           curl --fail --silent --show-error --location https://www.virgaconsulting.it/acquista | grep -q "Inizia il tuo anno con vFiscal"
           curl --fail --silent --show-error --location https://www.virgaconsulting.it/sw.js | grep -q "vfiscal-cloudflare-v2.6.5-20261003"
+
+      - name: Verify auth, cache and purchase API
+        run: |
+          app="$(curl --fail --silent --show-error --location https://www.virgaconsulting.it/vfiscal-app)"
+          echo "$app" | grep -q "window.VFISCAL_SUPABASE_URL"
+          echo "$app" | grep -q "vfOpenRegisterMode"
+          if echo "$app" | grep -q "Accesso temporaneamente non configurato"; then
+            echo "Obsolete auth warning is still present"
+            exit 1
+          fi
+
+          sw="$(curl --fail --silent --show-error --location https://www.virgaconsulting.it/sw.js)"
+          echo "$sw" | grep -q "const DYNAMIC_PATHS"
+          echo "$sw" | grep -q "/vfiscal-app"
+          echo "$sw" | grep -q "/acquista"
+
+          app_headers="$(curl --fail --silent --show-error --head https://www.virgaconsulting.it/vfiscal-app)"
+          echo "$app_headers" | grep -qi "cache-control:.*no-store"
+          buy_headers="$(curl --fail --silent --show-error --head https://www.virgaconsulting.it/acquista)"
+          echo "$buy_headers" | grep -qi "cache-control:.*no-store"
+
+          status="$(curl --silent --show-error --output /tmp/invalid-email.json --write-out "%{http_code}" \
+            -X POST "https://kytgwujzjahatblrkhgh.supabase.co/functions/v1/vfiscal-start-purchase" \
+            -H "Origin: https://www.virgaconsulting.it" \
+            -H "Content-Type: application/json" \
+            -H "apikey: sb_publishable_YqARTOD7oZD5Rg2vu6salQ_jGoGhHzY" \
+            --data '{"email":"not-an-email","terms_accepted":true}')"
+          test "$status" = "400"
+          grep -q "Inserisci un indirizzo email valido" /tmp/invalid-email.json
+
+          status="$(curl --silent --show-error --output /tmp/no-terms.json --write-out "%{http_code}" \
+            -X POST "https://kytgwujzjahatblrkhgh.supabase.co/functions/v1/vfiscal-start-purchase" \
+            -H "Origin: https://www.virgaconsulting.it" \
+            -H "Content-Type: application/json" \
+            -H "apikey: sb_publishable_YqARTOD7oZD5Rg2vu6salQ_jGoGhHzY" \
+            --data '{"email":"qa-vfiscal@example.com","terms_accepted":false}')"
+          test "$status" = "400"
+          grep -q "Termini di servizio" /tmp/no-terms.json
