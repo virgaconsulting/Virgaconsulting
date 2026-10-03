@@ -40,7 +40,7 @@ for file in "${files[@]}"; do
 done
 
 cat .deploy/runtime.patch.gz.b64.* | tr -d '\n\r' | base64 --decode | gzip --decompress > /tmp/virga-runtime.patch
-patch --batch --forward -p1 -d "$OUT" < /tmp/virga-runtime.patch
+patch --batch --forward -p1 -d "$OUT" < /tmp/virga-runtime.patch\npatch --batch --forward -p1 -d "$OUT" < .deploy/polish.patch
 
 cat > "$OUT/_headers" <<'EOF'
 /*
