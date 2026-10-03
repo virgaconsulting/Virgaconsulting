@@ -46,7 +46,6 @@ for name in dashboard-workspace purchase-experience landing-preview; do
   base64 --decode ".deploy/${name}.patch.gz.b64" | gzip --decompress > "/tmp/${name}.patch"
   patch --batch --forward -p1 -d "$OUT" < "/tmp/${name}.patch"
 done
-patch --batch --forward -p1 -d "$OUT" < .deploy/onboarding-polish.patch
 base64 --decode .deploy/home-vfiscal-workspace.patch.gz.b64 | gzip --decompress > /tmp/home-vfiscal-workspace.patch
 patch --batch --forward -p1 -d "$OUT" < /tmp/home-vfiscal-workspace.patch
 
