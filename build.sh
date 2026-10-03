@@ -48,6 +48,7 @@ for name in dashboard-workspace purchase-experience landing-preview; do
 done
 base64 --decode .deploy/home-vfiscal-workspace.patch.gz.b64 | gzip --decompress > /tmp/home-vfiscal-workspace.patch
 patch --batch --forward -p1 -d "$OUT" < /tmp/home-vfiscal-workspace.patch
+patch --batch --forward -p1 -d "$OUT" < .deploy/pwa-refresh.patch
 
 cat > "$OUT/_headers" <<'EOF'
 /*
