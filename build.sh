@@ -40,7 +40,8 @@ for file in "${files[@]}"; do
 done
 
 cat .deploy/runtime.patch.gz.b64.* | tr -d '\n\r' | base64 --decode | gzip --decompress > /tmp/virga-runtime.patch
-patch --batch --forward -p1 -d "$OUT" < /tmp/virga-runtime.patch\npatch --batch --forward -p1 -d "$OUT" < .deploy/polish.patch
+patch --batch --forward -p1 -d "$OUT" < /tmp/virga-runtime.patch
+patch --batch --forward -p1 -d "$OUT" < .deploy/polish.patch
 for name in dashboard-workspace purchase-experience landing-preview; do
   base64 --decode ".deploy/${name}.patch.gz.b64" | gzip --decompress > "/tmp/${name}.patch"
   patch --batch --forward -p1 -d "$OUT" < "/tmp/${name}.patch"
