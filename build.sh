@@ -161,7 +161,7 @@ import re, sys
 p=Path(sys.argv[1])
 s=p.read_text()
 s=re.sub(r"^// vFiscal release 2026-10-03-auth-checkout-fix\\nself\\.skipWaiting\\(\\);\\nself\\.addEventListener\\(\"activate\".*?\\n", "", s, count=1)
-s=re.sub(r"const CACHE = '[^']+';", "const CACHE = 'vfiscal-cloudflare-v2.6.3-20261003';", s, count=1)
+s=re.sub(r"const CACHE = '[^']+';", "const CACHE = 'vfiscal-cloudflare-v2.6.4-20261003';", s, count=1)
 if "const DYNAMIC_PATHS" not in s:
     s=s.replace(
         "const SHELL = [",
@@ -192,13 +192,25 @@ cat > "$OUT/_headers" <<'EOF'
 /vfiscal-app.html
   Cache-Control: no-cache, no-store, must-revalidate
 
+/vfiscal-app
+  Cache-Control: no-cache, no-store, must-revalidate
+
 /acquista.html
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/acquista
   Cache-Control: no-cache, no-store, must-revalidate
 
 /vfiscal-admin.html
   Cache-Control: no-cache, no-store, must-revalidate
 
+/vfiscal-admin
+  Cache-Control: no-cache, no-store, must-revalidate
+
 /delete-account.html
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/delete-account
   Cache-Control: no-cache, no-store, must-revalidate
 
 /src/pwa.js
@@ -224,10 +236,13 @@ cat > "$OUT/_headers" <<'EOF'
 
 /vfiscal.html
   Cache-Control: no-cache, must-revalidate
+
+/vfiscal
+  Cache-Control: no-cache, must-revalidate
 EOF
 
 cat > "$OUT/release.txt" <<'EOF'
-vfiscal-release-2026-10-03-2.6.3
+vfiscal-release-2026-10-03-2.6.4
 EOF
 
 # Host-level redirect virgaconsulting.it -> www.virgaconsulting.it is managed outside Pages _redirects.
