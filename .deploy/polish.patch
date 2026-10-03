@@ -1,0 +1,62 @@
+diff -ruN final_oct3/index.html polish/index.html
+--- final_oct3/index.html	2026-10-03 14:23:45.042730671 +0000
++++ polish/index.html	2026-10-03 14:25:32.858097377 +0000
+@@ -750,7 +750,7 @@
+ <div class="eyebrow">Uno strumento digitale dello studio</div>
+ <h2>vFiscal</h2>
+ <p>Il simulatore fiscale Virga Consulting dedicato al regime forfettario: incassi, soglia, stime e scenari in un’unica dashboard.</p>
+-<div class="vfiscal-actions"><a class="btn btn-primary" href="vfiscal.html">Scopri vFiscal →</a><a class="btn btn-outline" href="acquista.html">Acquista • €59/anno</a></div>
++<div class="vfiscal-actions"><a class="btn btn-primary" href="acquista.html">Inizia ora con vFiscal</a><a class="btn btn-outline" href="vfiscal.html">Scopri vFiscal →</a></div>
+ </div>
+ <div aria-label="Piccola anteprima vFiscal" class="vf-home-screen">
+ <div class="vf-home-screen-top">
+diff -ruN final_oct3/vfiscal-app.html polish/vfiscal-app.html
+--- final_oct3/vfiscal-app.html	2026-10-03 14:23:45.398730684 +0000
++++ polish/vfiscal-app.html	2026-10-03 14:25:32.860248991 +0000
+@@ -826,7 +826,7 @@
+     <div class="eyebrow">ACCESSO RISERVATO</div>
+     <h1>Accedi a vFiscal</h1>
+     <p>Hai già acquistato o sei cliente Virga Consulting? Accedi. Se devi ancora acquistare, vai direttamente al pagamento sicuro Stripe.</p>
+-    <a class="next" href="acquista.html" style="display:block;text-align:center;text-decoration:none;margin:14px 0 18px">Acquista vFiscal • €59/anno</a>
++    <a class="next" href="acquista.html" style="display:block;text-align:center;text-decoration:none;margin:14px 0 18px">Inizia ora con vFiscal</a>
+     <div style="text-align:center;color:var(--muted);font-size:11px;margin:-4px 0 15px">Pagamento annuale sicuro tramite Stripe</div>
+ 
+     <div id="vfAuthConfigWarning" class="vf-auth-warning" style="display:none">
+@@ -1324,7 +1324,7 @@
+ <b>vFiscal 2.0 è incluso senza costi aggiuntivi.</b><br/>
+ L’accesso viene riconosciuto direttamente sul tuo account.
+ </div>
+-<button class="next" id="accountUpgradeBtn" type="button" onclick="vfStartCheckout()" style="width:100%;margin-top:16px;display:none">Attiva vFiscal • €59/anno</button>
++<button class="next" id="accountUpgradeBtn" type="button" onclick="vfStartCheckout()" style="width:100%;margin-top:16px;display:none">Attiva vFiscal per 365 giorni</button>
+ <button class="back" id="accountCancelBtn" type="button" onclick="vfOpenBillingPortal()" style="width:100%;margin-top:10px;display:none">Gestisci abbonamento</button>
+ <div class="actions"><button class="back" onclick="goStep(0)">← Home</button><button class="next" onclick="startFlow()">Vai alla dashboard</button></div>
+ <button class="resettest" type="button" onclick="vfLogout()" style="width:100%;margin-top:16px">Esci dall’account</button>
+diff -ruN final_oct3/vfiscal.html polish/vfiscal.html
+--- final_oct3/vfiscal.html	2026-10-03 14:23:45.718730695 +0000
++++ polish/vfiscal.html	2026-10-03 14:25:32.858893165 +0000
+@@ -552,7 +552,7 @@
+ <h3>Dall’apertura della P.IVA alla dashboard.</h3>
+ <p>Se vFiscal è quello che cercavi, puoi attivarlo ora. Oppure continua: sotto trovi alert e stima dei versamenti.</p>
+ </div>
+-<a class="btn btn-primary" href="acquista.html">Acquista vFiscal • €59/anno</a>
++<a class="btn btn-primary" href="acquista.html">Inizia ora con vFiscal</a>
+ </div>
+ <div class="demo-grid" id="alert">
+ <div class="demo-copy">
+@@ -653,14 +653,14 @@
+ <div class="container purchase-wrap">
+ <div>
+ <div class="eyebrow">vFiscal 2.0</div>
+-<h2>Ora sai già cosa troverai dentro.</h2>
++<h2>Ecco quello che troverai dentro.</h2>
+ <p>Un unico piano per il forfettario: profilo fiscale, incassi, dashboard, simulazioni, soglia, fondo tasse, proiezioni, alert e storico. Se hai già un account puoi entrare subito. Se vuoi acquistare, vai direttamente al pagamento sicuro Stripe; al termine collegherai l’acquisto al tuo account vFiscal.</p>
+ </div>
+ <div class="price-card">
+ <div class="price">€59</div>
+ <div class="sub">ABBONAMENTO ANNUALE • RINNOVO AUTOMATICO • ANNULLA QUANDO VUOI</div>
+ <ul><li>Profilo fiscale separato dagli incassi</li><li>Saldo iniziale + incassi datati modificabili o eliminabili</li><li>Anni fiscali separati 2026 / 2027</li><li>Dashboard semplice: imposta stimata, contributi stimati, totale e quanto mettere da parte</li><li>Prossimi versamenti separati: saldo e acconti visibili nel dettaglio</li><li>Simulatore “E se incasso…?”</li><li>Fondo tasse: accantonato vs consigliato</li><li>Proiezioni e soglie</li><li>Storico e ricalcolo immediato</li></ul>
+-<div class="purchase-actions"><a class="btn btn-primary" href="acquista.html">Acquista vFiscal • €59/anno</a><a class="btn btn-secondary" href="vfiscal-app.html">Hai già acquistato? Accedi / completa attivazione</a></div>
++<div class="purchase-actions"><a class="btn btn-primary" href="acquista.html">Inizia ora con vFiscal</a><a class="btn btn-secondary" href="vfiscal-app.html">Hai già acquistato? Accedi / completa attivazione</a></div>
+ <div class="client">Se sei cliente Virga Consulting, vFiscal è incluso gratuitamente nel servizio.</div><div class="callout" style="margin-top:10px">Prima dell’acquisto consulta i <a href="terms.html">Termini di servizio</a> e la <a href="privacy.html">Privacy Policy</a>.</div><div class="callout"><b>Prezzo di lancio:</b> 59 € all’anno. L’attivazione avviene online con pagamento sicuro Stripe. Completa prima il pagamento sicuro Stripe; subito dopo accedi o crea l’account con la stessa email usata nel pagamento e l’accesso viene collegato automaticamente. Il rinnovo può essere annullato e l’accesso resta attivo fino alla fine del periodo già pagato.</div>
+ <div class="invoice-scope" id="invoiceScope"><b>Solo simulazione:</b> vFiscal non genera XML, non trasmette fatture e non comunica con lo SdI. Le eventuali fatture registrate servono esclusivamente a organizzare gli incassi nel simulatore.</div><div class="price-scope-mini"><b>Solo simulatore.</b> Nessun invio allo SdI e nessun adempimento fiscale automatico.</div></div>
+ </div>
