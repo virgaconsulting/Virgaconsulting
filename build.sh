@@ -51,6 +51,35 @@ patch --batch --forward -p1 -d "$OUT" < /tmp/home-vfiscal-workspace.patch
 patch --batch --forward -p1 -d "$OUT" < .deploy/pwa-refresh.patch
 patch --batch --forward -p1 -d "$OUT" < .deploy/final-polish.patch
 
+
+# Inject public Supabase client configuration for vFiscal auth.
+python3 - "$OUT/vfiscal-app.html" <<'PY'
+from pathlib import Path
+import sys
+p=Path(sys.argv[1])
+s=p.read_text()
+config='''<script>
+window.VFISCAL_SUPABASE_URL="https://kytgwujzjahatblrkhgh.supabase.co";
+window.VFISCAL_SUPABASE_ANON_KEY="sb_publishable_YqARTOD7oZD5Rg2vu6salQ_jGoGhHzY";
+</script>
+'''
+needle='<script type="module" src="/src/pwa.js"></script>'
+if 'window.VFISCAL_SUPABASE_URL=' not in s:
+    s=s.replace(needle,config+needle,1)
+p.write_text(s)
+PY
+
+# vFiscal release 2026-10-03-auth-checkout-fix: clear stale PWA HTML caches.
+python3 - "$OUT/sw.js" <<'PY'
+from pathlib import Path
+import sys
+p=Path(sys.argv[1])
+s=p.read_text()
+head='// vFiscal release 2026-10-03-auth-checkout-fix\nself.skipWaiting();\nself.addEventListener("activate", event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(() => self.clients.claim())));\n'
+if '2026-10-03-auth-checkout-fix' not in s:
+    p.write_text(head+s)
+PY
+
 cat > "$OUT/_headers" <<'EOF'
 /*
   X-Content-Type-Options: nosniff
