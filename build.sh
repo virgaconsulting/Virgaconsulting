@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BASE_URL="https://e681a6e8.vfiscal.pages.dev"
-OUT="dist"
+BASE_URL="${BASE_URL:-https://e681a6e8.vfiscal.pages.dev}"
+OUT="${OUT:-dist}"
 
 rm -rf "$OUT"
 mkdir -p "$OUT/.well-known" "$OUT/icons" "$OUT/src"
