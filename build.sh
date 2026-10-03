@@ -161,7 +161,18 @@ import re, sys
 p=Path(sys.argv[1])
 s=p.read_text()
 s=re.sub(r"^// vFiscal release 2026-10-03-auth-checkout-fix\\nself\\.skipWaiting\\(\\);\\nself\\.addEventListener\\(\"activate\".*?\\n", "", s, count=1)
-s=re.sub(r"const CACHE = '[^']+';", "const CACHE = 'vfiscal-cloudflare-v2.6.1-20261003';", s, count=1)
+s=re.sub(r"const CACHE = '[^']+';", "const CACHE = 'vfiscal-cloudflare-v2.6.2-20261003';", s, count=1)
+if "const DYNAMIC_PATHS" not in s:
+    s=s.replace(
+        "const SHELL = [",
+        "const DYNAMIC_PATHS = new Set(['/vfiscal-app','/vfiscal-app.html','/acquista','/acquista.html','/vfiscal-admin','/vfiscal-admin.html','/delete-account','/delete-account.html']);\nconst SHELL = [",
+        1
+    )
+    s=s.replace(
+        "if (req.mode === 'navigate') {\nevent.respondWith(",
+        "if (req.mode === 'navigate') {\nif (DYNAMIC_PATHS.has(url.pathname)) {\n  event.respondWith(fetch(req,{cache:'no-store'}).catch(async () => (await caches.match('/offline.html'))));\n  return;\n}\nevent.respondWith(",
+        1
+    )
 p.write_text(s)
 PY
 
@@ -213,7 +224,7 @@ cat > "$OUT/_headers" <<'EOF'
 EOF
 
 cat > "$OUT/release.txt" <<'EOF'
-vfiscal-release-2026-10-03-2.6.1
+vfiscal-release-2026-10-03-2.6.2
 EOF
 
 # Host-level redirect virgaconsulting.it -> www.virgaconsulting.it is managed outside Pages _redirects.
