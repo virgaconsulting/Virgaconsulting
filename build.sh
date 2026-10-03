@@ -49,6 +49,7 @@ done
 base64 --decode .deploy/home-vfiscal-workspace.patch.gz.b64 | gzip --decompress > /tmp/home-vfiscal-workspace.patch
 patch --batch --forward -p1 -d "$OUT" < /tmp/home-vfiscal-workspace.patch
 patch --batch --forward -p1 -d "$OUT" < .deploy/pwa-refresh.patch
+patch --batch --forward -p1 -d "$OUT" < .deploy/final-polish.patch
 
 cat > "$OUT/_headers" <<'EOF'
 /*
