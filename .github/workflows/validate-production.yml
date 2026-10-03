@@ -1,0 +1,29 @@
+name: Validate vFiscal production build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Validate shell
+        run: bash -n build.sh
+      - name: Build production bundle
+        run: bash build.sh
+      - name: Verify release
+        run: |
+          test -f dist/release.txt
+          grep -q "vfiscal-release-2026-10-03-2.6.4" dist/release.txt
+          test -f dist/vfiscal-app.html
+          test -f dist/acquista.html
+          grep -q "window.VFISCAL_SUPABASE_URL" dist/vfiscal-app.html
+          grep -q "vfiscal-cloudflare-v2.6.4-20261003" dist/sw.js
