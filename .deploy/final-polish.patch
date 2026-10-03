@@ -10,6 +10,7 @@
 +<meta content="Scopri vFiscal: lo spazio di lavoro per il regime forfettario con incassi, scadenze, stime, fondo tasse, soglie e simulazioni in un’unica dashboard." name="description"/>
  <style>
  :root{
+  --navy:#0a2238;--navy2:#133a5d;--gold:#b28d51;--paper:#f6f6f2;--cream:#eeece6;
 --- a/vfiscal-app.html
 +++ b/vfiscal-app.html
 @@ -12,7 +12,7 @@
@@ -20,9 +21,10 @@
 +<title>vFiscal — Area personale Forfettari</title>
  <style>
  :root{--navy:#082f61;--navy2:#061f42;--cream:#f6f1e7;--paper:#fffdf9;--sage:#84946d;--sage2:#e8eee1;--gold:#b89a62;--ink:#15375f;--muted:#707984;--line:#e2dbcf;--green:#347458;--yellow:#bd8339;--red:#b84f52;--shadow:0 18px 50px rgba(8,47,97,.10)}
+ *{box-sizing:border-box}
 --- a/acquista.html
 +++ b/acquista.html
-@@ -40,6 +40,7 @@
+@@ -37,6 +37,7 @@
      <div class="trust"><div>🔒 Stripe</div><div>✓ Controllo doppio accesso</div><div>↗ Attivazione online</div></div>
      <div id="purchaseMsg" class="msg"></div><div id="existingActions" class="existing"><a id="appLink" href="vfiscal-app.html">Accedi a vFiscal</a><a id="portalLink" href="https://billing.stripe.com/p/login/9B67sOeem1Wm4sY0m76AM00">Gestisci abbonamento Stripe</a></div>
      <div class="client-note">Già cliente Virga Consulting? <b>vFiscal può essere incluso nel tuo servizio.</b></div>
