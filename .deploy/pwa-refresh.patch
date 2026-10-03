@@ -1,0 +1,19 @@
+--- a/sw.js
++++ b/sw.js
+@@ -1,4 +1,4 @@
+-const CACHE = 'vfiscal-cloudflare-v2.4.0-final';
++const CACHE = 'vfiscal-cloudflare-v2.5.0-workspace';
+ const SHELL = [
+   '/',
+   '/index.html',
+--- a/manifest.webmanifest
++++ b/manifest.webmanifest
+@@ -2,7 +2,7 @@
+   "id": "/",
+   "name": "vFiscal — Virga Consulting",
+   "short_name": "vFiscal",
+-  "description": "vFiscal 2.0 di Virga Consulting: area personale per regime forfettario, incassi, stime fiscali e versamenti.",
++  "description": "vFiscal di Virga Consulting: spazio di lavoro per regime forfettario, incassi, scadenze, stime, fondo tasse e simulazioni.",
+   "lang": "it-IT",
+   "start_url": "/vfiscal-app.html?source=pwa",
+   "scope": "/",
