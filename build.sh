@@ -61,6 +61,8 @@ s=p.read_text()
 config='''<script>
 window.VFISCAL_SUPABASE_URL="https://kytgwujzjahatblrkhgh.supabase.co";
 window.VFISCAL_SUPABASE_ANON_KEY="sb_publishable_YqARTOD7oZD5Rg2vu6salQ_jGoGhHzY";
+window.VFISCAL_API_BASE="https://kytgwujzjahatblrkhgh.supabase.co/functions/v1";
+window.VFISCAL_AUTH_REDIRECT="https://www.virgaconsulting.it/vfiscal-app.html";
 </script>
 '''
 needle='<script type="module" src="/src/pwa.js"></script>'
@@ -69,15 +71,98 @@ if 'window.VFISCAL_SUPABASE_URL=' not in s:
 p.write_text(s)
 PY
 
-# vFiscal release 2026-10-03-auth-checkout-fix: clear stale PWA HTML caches.
-python3 - "$OUT/sw.js" <<'PY'
+
+# vFiscal robust auth bootstrap: wait for Supabase module and improve registration UX.
+python3 - "$OUT/vfiscal-app.html" <<'PY'
 from pathlib import Path
 import sys
 p=Path(sys.argv[1])
 s=p.read_text()
-head='// vFiscal release 2026-10-03-auth-checkout-fix\nself.skipWaiting();\nself.addEventListener("activate", event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(() => self.clients.claim())));\n'
-if '2026-10-03-auth-checkout-fix' not in s:
-    p.write_text(head+s)
+
+old="""async function vfEnsurePublicConfig(){
+  return vfConfigReady();
+}"""
+new="""async function vfEnsurePublicConfig(){
+  if(!vfConfigReady()) return false;
+  if(window.supabase?.createClient) return true;
+  for(let i=0;i<30;i++){
+    await new Promise(r=>setTimeout(r,100));
+    if(window.supabase?.createClient) return true;
+  }
+  try{
+    const mod=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1/+esm');
+    if(mod?.createClient) window.supabase={createClient:mod.createClient};
+  }catch(err){ console.error('Supabase bootstrap failed',err); }
+  return !!window.supabase?.createClient;
+}"""
+if old in s:
+    s=s.replace(old,new,1)
+
+s=s.replace(
+'Accesso temporaneamente non configurato. Verifica le variabili Supabase del deploy.',
+'Connessione al servizio non riuscita. Ricarica la pagina; se il problema persiste contatta l’assistenza.'
+)
+
+s=s.replace(
+'<label id="vfRegisterConsentWrap" style="display:flex;gap:8px;align-items:flex-start;font-size:11px;font-weight:600;line-height:1.45;margin:10px 0 14px">',
+'<label id="vfRegisterConsentWrap" style="display:none;gap:8px;align-items:flex-start;font-size:11px;font-weight:600;line-height:1.45;margin:10px 0 14px">'
+)
+s=s.replace(
+'<button type="button" onclick="vfRegister()">Crea account</button>',
+'<button id="vfRegisterModeBtn" type="button" onclick="vfOpenRegisterMode()">Crea account</button>'
+)
+
+anchor="function vfShowLogin(){document.getElementById('vfAuthGate')?.classList.remove('vf-auth-hidden')}"
+extra="""function vfOpenRegisterMode(){
+  const heading=document.getElementById('vfAuthHeading'),intro=document.getElementById('vfAuthIntro');
+  const consent=document.getElementById('vfRegisterConsentWrap'),login=document.getElementById('vfLoginBtn');
+  const mode=document.getElementById('vfRegisterModeBtn');
+  if(heading)heading.textContent='Crea il tuo account vFiscal';
+  if(intro)intro.textContent='Usa l’email collegata al tuo acquisto oppure quella comunicata a Virga Consulting.';
+  if(consent)consent.style.display='flex';
+  if(login){login.textContent='Crea account';login.setAttribute('onclick','vfRegister()')}
+  if(mode){mode.textContent='Hai già un account? Accedi';mode.setAttribute('onclick','vfOpenLoginMode()')}
+  vfSetAuthMessage('');
+}
+function vfOpenLoginMode(){
+  const heading=document.getElementById('vfAuthHeading'),intro=document.getElementById('vfAuthIntro');
+  const consent=document.getElementById('vfRegisterConsentWrap'),login=document.getElementById('vfLoginBtn');
+  const mode=document.getElementById('vfRegisterModeBtn');
+  if(heading)heading.textContent='Accedi a vFiscal';
+  if(intro)intro.textContent='Hai già acquistato o sei cliente Virga Consulting? Accedi al tuo account.';
+  if(consent)consent.style.display='none';
+  if(login){login.textContent='Accedi';login.setAttribute('onclick','vfLogin()')}
+  if(mode){mode.textContent='Crea account';mode.setAttribute('onclick','vfOpenRegisterMode()')}
+  vfSetAuthMessage('');
+}
+"""
+if extra not in s and anchor in s:
+    s=s.replace(anchor,anchor+"\n"+extra,1)
+
+# Ensure init waits on actual bootstrap result rather than re-checking too early.
+s=s.replace(
+"""  await vfEnsurePublicConfig();
+  const params=new URLSearchParams(location.search);""",
+"""  const publicReady=await vfEnsurePublicConfig();
+  const params=new URLSearchParams(location.search);""",
+1)
+s=s.replace(
+"""  if(!vfConfigReady()||!window.supabase){""",
+"""  if(!publicReady||!vfConfigReady()||!window.supabase?.createClient){""",
+1)
+
+p.write_text(s)
+PY
+
+# Stable vFiscal service worker: rotate cache without deleting the newly installed cache.
+python3 - "$OUT/sw.js" <<'PY'
+from pathlib import Path
+import re, sys
+p=Path(sys.argv[1])
+s=p.read_text()
+s=re.sub(r"^// vFiscal release 2026-10-03-auth-checkout-fix\\nself\\.skipWaiting\\(\\);\\nself\\.addEventListener\\(\"activate\".*?\\n", "", s, count=1)
+s=re.sub(r"const CACHE = '[^']+';", "const CACHE = 'vfiscal-cloudflare-v2.6.1-20261003';", s, count=1)
+p.write_text(s)
 PY
 
 cat > "$OUT/_headers" <<'EOF'
@@ -103,6 +188,12 @@ cat > "$OUT/_headers" <<'EOF'
   Cache-Control: no-cache, no-store, must-revalidate
 
 /src/pwa.js
+  Cache-Control: no-cache, must-revalidate
+
+/src/install-pwa.js
+  Cache-Control: no-cache, must-revalidate
+
+/manifest.webmanifest
   Cache-Control: no-cache, must-revalidate
 
 /sw.js
