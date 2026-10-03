@@ -1,0 +1,29 @@
+--- a/vfiscal-app.html
++++ b/vfiscal-app.html
+@@ -930,7 +930,7 @@
+ <button class="choice" data-value="0.67" onclick="selectChoice('coeff',this)"><span class="icon">67</span><div><b>Altre attività</b><small>Coefficiente 67% — da verificare sul codice ATECO</small></div></button>
+ <button class="choice" data-value="0.54" onclick="selectChoice('coeff',this)"><span class="icon">54</span><div><b>Commercio ambulante non alimentare</b><small>Coefficiente 54%</small></div></button>
+ </div>
+-<div class="simple-note">Nel prodotto definitivo potremo leggere il codice ATECO dal profilo cliente e selezionare il coefficiente senza chiedertelo.</div>
++<div class="simple-note">Il coefficiente scelto viene salvato nel profilo fiscale. Verifica che corrisponda al tuo codice ATECO: vFiscal non effettua ancora l’abbinamento automatico ATECO → coefficiente.</div>
+ <div class="actions"><button class="back" onclick="prevStep()">←</button><button class="next" onclick="nextStep()">Conferma e avanti</button></div>
+ </section><section class="screen" data-step="4">
+ <div class="eyebrow">3 • PREVIDENZA</div>
+@@ -987,7 +987,7 @@
+ <div class="summary" id="summary"></div>
+ <div class="actions"><button class="back" onclick="prevStep()">←</button><button class="next" onclick="nextStep()">Conferma e avanti</button></div>
+ </section><section class="screen" data-step="9" id="optionalRefineStep">
+-<div class="eyebrow">8 • AFFINA IL CALCOLO</div>
++<div class="eyebrow">7 • AFFINA IL CALCOLO</div>
+ <h2>Vuoi rendere la previsione più precisa?</h2>
+ <p>È facoltativo. Se non conosci questi dati, puoi saltare e vedere subito il risultato.</p>
+ <div class="simple-note"><b>Non sei obbligato a compilare nulla.</b><br/>Questi dati servono soprattutto a rendere più utile il calcolo di quanto puoi realmente spendere.</div>
+@@ -1117,7 +1117,7 @@
+     <div class="form-grid">
+       <label>Importo (€)<input id="movementAmount" type="number" min="0" inputmode="decimal" placeholder="Es. 1.500"></label>
+       <label>Data<input id="movementDate" type="date"></label>
+-      <label class="wide">Nota facoltativa<input id="movementNote" type="text" maxlength="80" placeholder="Es. Cliente Rossi"></label>
++      <label class="wide">Nota facoltativa<input id="movementNote" type="text" maxlength="80" placeholder="Es. Consulenza settembre"></label>
+     </div>
+     <button class="next" onclick="saveMovement()" style="width:100%">Salva incasso</button>
+   </div>
