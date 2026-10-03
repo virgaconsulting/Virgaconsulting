@@ -160,8 +160,10 @@ from pathlib import Path
 import re, sys
 p=Path(sys.argv[1])
 s=p.read_text()
-s=re.sub(r"^// vFiscal release 2026-10-03-auth-checkout-fix\\nself\\.skipWaiting\\(\\);\\nself\\.addEventListener\\(\"activate\".*?\\n", "", s, count=1)
-s=re.sub(r"const CACHE = '[^']+';", "const CACHE = 'vfiscal-cloudflare-v2.6.4-20261003';", s, count=1)
+legacy_head='// vFiscal release 2026-10-03-auth-checkout-fix\\nself.skipWaiting();\\nself.addEventListener("activate", event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(() => self.clients.claim())));\\n'
+if s.startswith(legacy_head):
+    s=s[len(legacy_head):]
+s=re.sub(r"const CACHE = '[^']+';", "const CACHE = 'vfiscal-cloudflare-v2.6.5-20261003';", s, count=1)
 if "const DYNAMIC_PATHS" not in s:
     s=s.replace(
         "const SHELL = [",
@@ -242,7 +244,7 @@ cat > "$OUT/_headers" <<'EOF'
 EOF
 
 cat > "$OUT/release.txt" <<'EOF'
-vfiscal-release-2026-10-03-2.6.4
+vfiscal-release-2026-10-03-2.6.5
 EOF
 
 # Host-level redirect virgaconsulting.it -> www.virgaconsulting.it is managed outside Pages _redirects.
