@@ -80,9 +80,7 @@ cat > "$OUT/_headers" <<'EOF'
   Cache-Control: no-cache, must-revalidate
 EOF
 
-cat > "$OUT/_redirects" <<'EOF'
-https://virgaconsulting.it/* https://www.virgaconsulting.it/:splat 301
-EOF
+# Host-level redirect virgaconsulting.it -> www.virgaconsulting.it is managed outside Pages _redirects.
 
 grep -q 'VIRGA_BUILD: 2026-10-03-final-cloudflare' "$OUT/index.html"
 grep -q 'VIRGA_BUILD: 2026-10-03-final-cloudflare' "$OUT/vfiscal.html"
