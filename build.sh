@@ -67,7 +67,10 @@ window.VFISCAL_AUTH_REDIRECT="https://www.virgaconsulting.it/vfiscal-app.html";
 '''
 needle='<script type="module" src="/src/pwa.js"></script>'
 if 'window.VFISCAL_SUPABASE_URL=' not in s:
-    s=s.replace(needle,config+needle,1)
+    if '</head>' in s:
+        s=s.replace('</head>',config+'</head>',1)
+    else:
+        s=s.replace(needle,config+needle,1)
 p.write_text(s)
 PY
 
@@ -154,32 +157,68 @@ s=s.replace(
 p.write_text(s)
 PY
 
-# Stable vFiscal service worker: rotate cache without deleting the newly installed cache.
-python3 - "$OUT/sw.js" <<'PY'
-from pathlib import Path
-import re, sys
-p=Path(sys.argv[1])
-s=p.read_text()
-legacy_head='// vFiscal release 2026-10-03-auth-checkout-fix\\nself.skipWaiting();\\nself.addEventListener("activate", event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(() => self.clients.claim())));\\n'
-if s.startswith(legacy_head):
-    s=s[len(legacy_head):]
-s=re.sub(r"const CACHE = '[^']+';", "const CACHE = 'vfiscal-cloudflare-v2.6.5-20261003';", s, count=1)
-if "const DYNAMIC_PATHS" not in s:
-    s=s.replace(
-        "const SHELL = [",
-        "const DYNAMIC_PATHS = new Set(['/vfiscal-app','/vfiscal-app.html','/acquista','/acquista.html','/vfiscal-admin','/vfiscal-admin.html','/delete-account','/delete-account.html']);\nconst SHELL = [",
-        1
-    )
-    # Never precache sensitive/dynamic pages.
-    s=s.replace("'/'"+"acquista.html',\n", "")
-    s=s.replace("'/'"+"vfiscal-app.html',\n", "")
-    s=s.replace(
-        "if (req.mode === 'navigate') {\nevent.respondWith(",
-        "if (req.mode === 'navigate') {\nif (DYNAMIC_PATHS.has(url.pathname)) {\n  event.respondWith(fetch(req,{cache:'no-store'}).catch(async () => (await caches.match('/offline.html'))));\n  return;\n}\nevent.respondWith(",
-        1
-    )
-p.write_text(s)
-PY
+# vFiscal service worker: never cache auth, checkout or admin routes.
+cat > "$OUT/sw.js" <<'EOF'
+const CACHE = 'vfiscal-cloudflare-v2.7.0-20261005';
+const DYNAMIC_PATHS = new Set([
+  '/vfiscal-app','/vfiscal-app.html',
+  '/acquista','/acquista.html',
+  '/vfiscal-admin','/vfiscal-admin.html',
+  '/delete-account','/delete-account.html'
+]);
+const SHELL = [
+  '/','/index.html','/vfiscal.html',
+  '/privacy.html','/terms.html','/support.html','/offline.html',
+  '/manifest.webmanifest',
+  '/icons/icon-180.png','/icons/icon-192.png','/icons/icon-512.png',
+  '/icons/icon-maskable-192.png','/icons/icon-maskable-512.png'
+];
+
+self.addEventListener('install', event => {
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)));
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', event => {
+  const req = event.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
+
+  if (DYNAMIC_PATHS.has(url.pathname)) {
+    event.respondWith(fetch(req, {cache:'no-store'}).catch(() => caches.match('/offline.html')));
+    return;
+  }
+
+  if (req.mode === 'navigate') {
+    event.respondWith(
+      fetch(req).then(res => {
+        if (res.ok) caches.open(CACHE).then(c => c.put(req, res.clone()));
+        return res;
+      }).catch(async () => (await caches.match(req)) || (await caches.match('/offline.html')))
+    );
+    return;
+  }
+
+  event.respondWith(
+    caches.match(req).then(hit => hit || fetch(req).then(res => {
+      if (res.ok && ['style','script','image','font','manifest'].includes(req.destination)) {
+        caches.open(CACHE).then(c => c.put(req, res.clone()));
+      }
+      return res;
+    }))
+  );
+});
+EOF
+
 
 cat > "$OUT/_headers" <<'EOF'
 /*
@@ -244,7 +283,7 @@ cat > "$OUT/_headers" <<'EOF'
 EOF
 
 cat > "$OUT/release.txt" <<'EOF'
-vfiscal-release-2026-10-03-2.6.5
+vfiscal-release-2026-10-05-2.7.0
 EOF
 
 # Host-level redirect virgaconsulting.it -> www.virgaconsulting.it is managed outside Pages _redirects.
