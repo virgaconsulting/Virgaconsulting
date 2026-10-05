@@ -22,6 +22,9 @@ jobs:
       - name: Inspect auth boot order
         run: |
           grep -n -E "VFISCAL_SUPABASE|vfConfigReady|vfEnsurePublicConfig|supabase-js|src/pwa.js|vfInitAuth" dist/vfiscal-app.html | head -80
+      - name: Inspect registration flow
+        run: |
+          sed -n '3270,3345p' dist/vfiscal-app.html
       - name: Verify release
         run: |
           test -f dist/release.txt
