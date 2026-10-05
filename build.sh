@@ -250,6 +250,18 @@ reg_replacement="""async function vfRegister(){
       body:JSON.stringify({email,password,session_id:pending})
     });
     const out=await res.json().catch(()=>({}));
+    if(res.status===409&&out.code==='account_exists'){
+      vfOpenLoginMode();
+      vfSetAuthMessage(out.error||'Esiste già un account con questa email. Accedi per collegare automaticamente l’acquisto.');
+      return;
+    }
+    if(res.status===409&&out.code==='purchase_already_claimed'){
+      try{localStorage.removeItem('vfiscal_pending_checkout_session')}catch(_){}
+      history.replaceState({},'',location.pathname);
+      vfOpenLoginMode();
+      vfSetAuthMessage(out.error||'Questo acquisto è già collegato a un account. Accedi oppure usa Recupera password.');
+      return;
+    }
     if(!res.ok)throw new Error(out.error||'Registrazione non disponibile');
 
     const {data,error}=await vfSupabase.auth.signInWithPassword({email,password});
