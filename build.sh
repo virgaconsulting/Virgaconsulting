@@ -286,6 +286,41 @@ if "auth.signUp(" in s:
 p.write_text(s)
 PY
 
+# Force studio-created temporary passwords to be changed at first login.
+python3 - "$OUT/vfiscal-app.html" <<'PY'
+from pathlib import Path
+import sys
+p=Path(sys.argv[1])
+s=p.read_text()
+
+old="""  if(event==='PASSWORD_RECOVERY'){vfShowPasswordRecovery(true);vfSetAuthMessage('Scegli una nuova password.');return}
+  vfHideLogin();vfSetAuthMessage('');await vfClaimPendingPurchase();"""
+new="""  if(event==='PASSWORD_RECOVERY'){vfShowPasswordRecovery(true);vfSetAuthMessage('Scegli una nuova password.');return}
+  if(vfCurrentUser?.user_metadata?.must_change_password===true){
+    vfShowPasswordRecovery(true);
+    vfSetAuthMessage('Per sicurezza devi scegliere una nuova password personale prima di usare vFiscal.');
+    return
+  }
+  vfHideLogin();vfSetAuthMessage('');await vfClaimPendingPurchase();"""
+if old not in s:
+    raise SystemExit("vfApplySession temporary-password insertion point not found")
+s=s.replace(old,new,1)
+
+old_update="""  const {error}=await vfSupabase.auth.updateUser({password:a});if(error){vfSetAuthMessage(error.message,true);return}vfShowPasswordRecovery(false);vfSetAuthMessage('Password aggiornata.');const {data:{session}}=await vfSupabase.auth.getSession();await vfApplySession(session,'USER_UPDATED');"""
+new_update="""  const {error}=await vfSupabase.auth.updateUser({password:a});if(error){vfSetAuthMessage(error.message,true);return}
+  if(vfCurrentUser?.user_metadata?.must_change_password===true){
+    const nextMeta={...(vfCurrentUser.user_metadata||{}),must_change_password:false};
+    const {error:metaError}=await vfSupabase.auth.updateUser({data:nextMeta});
+    if(metaError){vfSetAuthMessage('Password aggiornata, ma non riesco a completare la verifica del primo accesso. Riprova.',true);return}
+  }
+  vfShowPasswordRecovery(false);vfSetAuthMessage('Password aggiornata.');const {data:{session}}=await vfSupabase.auth.getSession();await vfApplySession(session,'USER_UPDATED');"""
+if old_update not in s:
+    raise SystemExit("vfUpdatePassword insertion point not found")
+s=s.replace(old_update,new_update,1)
+
+p.write_text(s)
+PY
+
 # Admin-only creation of complimentary Virga Consulting accounts.
 python3 - "$OUT/vfiscal-admin.html" <<'PY'
 from pathlib import Path
