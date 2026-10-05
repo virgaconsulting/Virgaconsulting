@@ -19,6 +19,9 @@ jobs:
         run: bash -n build.sh
       - name: Build production bundle
         run: bash build.sh
+      - name: Inspect auth boot order
+        run: |
+          grep -n -E "VFISCAL_SUPABASE|vfConfigReady|vfEnsurePublicConfig|supabase-js|src/pwa.js|vfInitAuth" dist/vfiscal-app.html | head -80
       - name: Verify release
         run: |
           test -f dist/release.txt
