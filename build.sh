@@ -733,6 +733,38 @@ cat > "$OUT/release.txt" <<'EOF'
 vfiscal-release-2026-10-05-2.8.2
 EOF
 
+# Purchase page customer-clarity polish.
+python3 - "$OUT/acquista.html" <<'PY'
+from pathlib import Path
+import sys
+
+p=Path(sys.argv[1])
+s=p.read_text()
+
+s=s.replace(
+  '<p>Inserisci l’email che userai per il tuo account vFiscal. Prima di aprire Stripe verifichiamo che non esista già un accesso attivo, così evitiamo doppi abbonamenti.</p>',
+  '<p>Inserisci l’email che userai per vFiscal. Controlliamo prima che non esista già un accesso attivo, poi verrai portato al pagamento sicuro Stripe.</p>'
+)
+s=s.replace(
+  '<div class="note"><b>Rinnovo automatico annuale.</b> Puoi annullare il rinnovo dal portale Stripe; l’accesso resta attivo fino alla fine del periodo già pagato. Se sei già cliente Virga Consulting e vFiscal è incluso nel tuo servizio, non devi acquistarlo.</div>',
+  '<div class="note"><b>59 € per 365 giorni.</b> Il rinnovo è automatico, ma puoi annullarlo quando vuoi dal portale Stripe: l’accesso resta attivo fino alla fine del periodo già pagato.<br><br><b>Se sei già cliente Virga Consulting</b> e vFiscal è incluso nel tuo servizio, non devi acquistarlo: accedi direttamente.</div>'
+)
+s=s.replace(
+  '<button id="purchaseBtn" class="buy" type="button">Vai al pagamento sicuro Stripe →</button>',
+  '<button id="purchaseBtn" class="buy" type="button">Continua su Stripe • 59 €/anno →</button>'
+)
+s=s.replace(
+  "btn.textContent='Vai al pagamento sicuro Stripe →'",
+  "btn.textContent='Continua su Stripe • 59 €/anno →'"
+)
+s=s.replace(
+  '<p class="micro">Il pagamento è elaborato da Stripe. vFiscal non riceve né memorizza i dati completi della carta. Non inviare password o dati di pagamento tramite email o assistenza.</p>',
+  '<p class="micro"><b>Dopo il pagamento:</b> tornerai automaticamente su vFiscal per accedere o completare l’attivazione con la stessa email usata su Stripe.<br><br>Il pagamento è elaborato da Stripe. vFiscal non riceve né memorizza i dati completi della carta. Non inviare password o dati di pagamento tramite email o assistenza.</p>'
+)
+
+p.write_text(s)
+PY
+
 # Final production audit: internal links, critical flows, IDs and JavaScript syntax.
 python3 - "$OUT" <<'PY'
 from pathlib import Path
