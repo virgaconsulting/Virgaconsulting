@@ -43,27 +43,6 @@ cat .deploy/runtime.patch.gz.b64.* | tr -d '\n\r' | base64 --decode | gzip --dec
 patch --batch --forward -p1 -d "$OUT" < /tmp/virga-runtime.patch
 patch --batch --forward -p1 -d "$OUT" < .deploy/polish.patch
 
-# Replace the verbose vFiscal sales page with the concise conversion-first version.
-python3 - "$OUT/vfiscal.html" <<'PY'
-from pathlib import Path
-import sys
-p = Path(sys.argv[1])
-html = p.read_text()
-css = Path(".deploy/vfiscal-sales.css").read_text()
-main = Path(".deploy/vfiscal-sales-main.html").read_text()
-if '<style id="vfiscal-sales-redesign">' not in html:
-    html = html.replace('</head>', '<style id="vfiscal-sales-redesign">\\n' + css + '\\n</style>\\n</head>')
-start = html.find('<main>')
-end = html.find('</main>')
-if start == -1 or end == -1 or end < start:
-    raise SystemExit("vfiscal.html main section not found")
-html = html[:start] + main + html[end+7:]
-old_nav = '<a href="index.html">Studio</a><a href="#anteprima">Funzioni</a><a href="#esempio-completo">Esempio</a><a href="#come-funziona">Come funziona</a><a href="#acquista">Prezzo</a><a href="acquista.html">Acquista</a>'
-new_nav = '<a href="index.html">Studio</a><a href="#vantaggi">Funzioni</a><a href="#faq">FAQ</a><a href="#prezzo">Prezzo</a><a href="acquista.html">Acquista</a>'
-html = html.replace(old_nav, new_nav)
-p.write_text(html)
-PY
-
 for name in dashboard-workspace purchase-experience landing-preview; do
   base64 --decode ".deploy/${name}.patch.gz.b64" | gzip --decompress > "/tmp/${name}.patch"
   patch --batch --forward -p1 -d "$OUT" < "/tmp/${name}.patch"
@@ -581,6 +560,48 @@ sv=sv.replace(
 )
 
 app.write_text(sv)
+PY
+
+# Replace the verbose vFiscal sales page only after all legacy patches have been applied.
+python3 - "$OUT/vfiscal.html" <<'PY'
+from pathlib import Path
+import sys
+
+p = Path(sys.argv[1])
+html = p.read_text()
+css = Path(".deploy/vfiscal-sales.css").read_text()
+main = Path(".deploy/vfiscal-sales-main.html").read_text()
+
+if '<style id="vfiscal-sales-redesign">' not in html:
+    html = html.replace(
+        '</head>',
+        '<style id="vfiscal-sales-redesign">\n' + css + '\n</style>\n</head>',
+        1
+    )
+
+start = html.find('<main>')
+end = html.find('</main>')
+if start == -1 or end == -1 or end < start:
+    raise SystemExit("vfiscal.html main section not found")
+html = html[:start] + main + html[end + len('</main>'):]
+
+old_nav = '<a href="index.html">Studio</a><a href="#anteprima">Funzioni</a><a href="#esempio-completo">Esempio</a><a href="#come-funziona">Come funziona</a><a href="#acquista">Prezzo</a><a href="acquista.html">Acquista</a>'
+new_nav = '<a href="index.html">Studio</a><a href="#vantaggi">Funzioni</a><a href="#faq">FAQ</a><a href="#prezzo">Prezzo</a><a href="acquista.html">Acquista</a>'
+html = html.replace(old_nav, new_nav)
+
+required = [
+    'href="acquista.html"',
+    'href="vfiscal-app.html"',
+    'id="faq"',
+    'id="prezzo"',
+    'id="vantaggi"',
+    'Acquista vFiscal'
+]
+missing = [x for x in required if x not in html]
+if missing:
+    raise SystemExit("vfiscal sales validation failed: " + ", ".join(missing))
+
+p.write_text(html)
 PY
 
 # vFiscal service worker: never cache auth, checkout or admin routes.
