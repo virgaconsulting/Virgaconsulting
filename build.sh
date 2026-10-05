@@ -633,7 +633,7 @@ if start == -1 or end == -1 or end < start:
 html = html[:start] + main + html[end + len('</main>'):]
 
 old_nav = '<a href="index.html">Studio</a><a href="#anteprima">Funzioni</a><a href="#esempio-completo">Esempio</a><a href="#come-funziona">Come funziona</a><a href="#acquista">Prezzo</a><a href="acquista.html">Acquista</a>'
-new_nav = '<a href="index.html">Studio</a><a href="#vantaggi">Funzioni</a><a href="#faq">FAQ</a><a href="#prezzo">Prezzo</a><a href="acquista.html">Acquista</a>'
+new_nav = '<a href="index.html">Studio</a><a href="#vantaggi">Funzioni</a><a href="#anteprima-prodotto">Anteprima</a><a href="#faq">FAQ</a><a href="#prezzo">Prezzo</a><a href="acquista.html">Acquista</a>'
 html = html.replace(old_nav, new_nav)
 
 required = [
