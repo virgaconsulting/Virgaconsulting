@@ -157,9 +157,150 @@ s=s.replace(
 p.write_text(s)
 PY
 
+
+# vFiscal paid-only registration gate: public users can register only after a verified Stripe checkout.
+python3 - "$OUT/vfiscal-app.html" <<'PY'
+from pathlib import Path
+import re, sys
+p=Path(sys.argv[1])
+s=p.read_text()
+
+s=s.replace(
+  'Accedi al tuo account oppure creane uno nuovo per attivare vFiscal.',
+  'Accedi al tuo account vFiscal.'
+)
+s=s.replace(
+  '<button id="vfRegisterModeBtn" type="button" onclick="vfOpenRegisterMode()">Crea account</button>',
+  '<button id="vfRegisterModeBtn" type="button" onclick="vfOpenRegisterMode()" style="display:none">Crea account</button>'
+)
+
+mode_pattern=r"function vfOpenRegisterMode\(\)\{.*?\n\}\nfunction vfOpenLoginMode\(\)\{.*?\n\}"
+mode_replacement="""function vfCanRegister(){
+  const pending=vfPendingCheckoutSession();
+  return !!(pending&&pending.startsWith('cs_'));
+}
+function vfOpenRegisterMode(){
+  if(!vfCanRegister()){
+    location.href='acquista.html';
+    return;
+  }
+  const heading=document.getElementById('vfAuthHeading'),intro=document.getElementById('vfAuthIntro');
+  const consent=document.getElementById('vfRegisterConsentWrap'),login=document.getElementById('vfLoginBtn');
+  const mode=document.getElementById('vfRegisterModeBtn');
+  if(heading)heading.textContent='Completa il tuo account vFiscal';
+  if(intro)intro.textContent='Pagamento verificato: usa la stessa email dell’acquisto e scegli la tua password.';
+  if(consent)consent.style.display='flex';
+  if(login){login.textContent='Crea account';login.setAttribute('onclick','vfRegister()')}
+  if(mode){mode.style.display='inline';mode.textContent='Hai già un account? Accedi';mode.setAttribute('onclick','vfOpenLoginMode()')}
+  vfSetAuthMessage('');
+}
+function vfOpenLoginMode(){
+  const heading=document.getElementById('vfAuthHeading'),intro=document.getElementById('vfAuthIntro');
+  const consent=document.getElementById('vfRegisterConsentWrap'),login=document.getElementById('vfLoginBtn');
+  const mode=document.getElementById('vfRegisterModeBtn');
+  if(heading)heading.textContent='Accedi a vFiscal';
+  if(intro)intro.textContent='Accedi con le credenziali del tuo account vFiscal.';
+  if(consent)consent.style.display='none';
+  if(login){login.textContent='Accedi';login.setAttribute('onclick','vfLogin()')}
+  if(mode){
+    if(vfCanRegister()){
+      mode.style.display='inline';
+      mode.textContent='Completa registrazione';
+      mode.setAttribute('onclick','vfOpenRegisterMode()');
+    }else{
+      mode.style.display='none';
+    }
+  }
+  vfSetAuthMessage('');
+}"""
+s,n=re.subn(mode_pattern,mode_replacement,s,count=1,flags=re.S)
+if n!=1:
+    raise SystemExit("registration mode functions not found")
+
+old_checkout="""    }else{
+      vfShowLogin();
+      vfSetAuthMessage('Pagamento ricevuto. Ora accedi oppure crea un account con la stessa email usata su Stripe: collegheremo automaticamente l’acquisto.');
+    }"""
+new_checkout="""    }else{
+      vfShowLogin();
+      vfOpenRegisterMode();
+      vfSetAuthMessage('Pagamento ricevuto. Completa ora la creazione del tuo account con la stessa email usata su Stripe.');
+    }"""
+if old_checkout in s:
+    s=s.replace(old_checkout,new_checkout,1)
+
+reg_pattern=r"async function vfRegister\(\)\{.*?\n\}\nasync function vfResetPassword\(\)"
+reg_replacement="""async function vfRegister(){
+  if(!vfSupabase){vfSetAuthMessage('Registrazione non disponibile in questo momento.',true);return}
+  const pending=vfPendingCheckoutSession();
+  if(!pending||!pending.startsWith('cs_')){
+    vfSetAuthMessage('Per creare un account devi prima completare l’acquisto di vFiscal.',true);
+    return;
+  }
+  const email=document.getElementById('vfAuthEmail')?.value.trim(),password=document.getElementById('vfAuthPassword')?.value||'';
+  if(!email||password.length<8){vfSetAuthMessage('Inserisci la stessa email usata per il pagamento e una password di almeno 8 caratteri.',true);return}
+  if(!document.getElementById('vfRegisterTerms')?.checked){vfSetAuthMessage('Per completare l’account devi accettare i Termini di servizio e prendere visione della Privacy Policy.',true);return}
+
+  vfSetAuthMessage('Verifica pagamento e creazione account…');
+  try{
+    const res=await fetch(vfApiUrl('/vfiscal-register-paid'),{
+      method:'POST',
+      headers:{'apikey':window.VFISCAL_SUPABASE_ANON_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({email,password,session_id:pending})
+    });
+    const out=await res.json().catch(()=>({}));
+    if(!res.ok)throw new Error(out.error||'Registrazione non disponibile');
+
+    const {data,error}=await vfSupabase.auth.signInWithPassword({email,password});
+    if(error||!data?.session)throw new Error('Account creato, ma l’accesso automatico non è riuscito. Prova ad accedere.');
+    vfSetAuthMessage('Account creato. vFiscal è attivo.');
+    history.replaceState({},'',location.pathname);
+    await vfApplySession(data.session,'SIGNED_IN');
+  }catch(err){
+    console.error(err);
+    vfSetAuthMessage(err.message||'Registrazione non riuscita.',true);
+  }
+}
+async function vfResetPassword()"""
+s,n=re.subn(reg_pattern,reg_replacement,s,count=1,flags=re.S)
+if n!=1:
+    raise SystemExit("vfRegister function not found")
+
+# The public app must never expose the direct Supabase sign-up primitive.
+if "auth.signUp(" in s:
+    raise SystemExit("direct public Supabase signUp still present")
+
+p.write_text(s)
+PY
+
+# Admin-only creation of complimentary Virga Consulting accounts.
+python3 - "$OUT/vfiscal-admin.html" <<'PY'
+from pathlib import Path
+import sys
+p=Path(sys.argv[1])
+s=p.read_text()
+
+s=s.replace(
+  '.grant{display:grid;grid-template-columns:minmax(240px,1fr) auto auto;',
+  '.grant{display:grid;grid-template-columns:minmax(240px,1fr) auto auto auto;'
+)
+s=s.replace(
+  '<button class="btn" onclick="act(\'grant\')">Attiva incluso</button>',
+  '<button class="btn" onclick="act(\'create\')">Crea account incluso</button>\n        <button class="btn secondary" onclick="act(\'grant\')">Attiva incluso</button>'
+)
+
+old="""async function act(action){try{const email=$('clientEmail').value.trim();if(!email)throw new Error('Inserisci l’email del cliente.');setMsg('msg','Aggiornamento…');await call({action,email});setMsg('msg',action==='grant'?'Accesso incluso attivato.':'Accesso incluso revocato.');await load()}catch(e){setMsg('msg',e.message,true)}}"""
+new="""async function act(action){try{const email=$('clientEmail').value.trim();if(!email)throw new Error('Inserisci l’email del cliente.');setMsg('msg',action==='create'?'Creazione account…':'Aggiornamento…');const out=await call({action,email});if(action==='create'){if(out.temporary_password){setMsg('msg','Account cliente creato e vFiscal incluso. Password temporanea: '+out.temporary_password+' — comunicala solo al cliente.');}else{setMsg('msg','Account già esistente: accesso Virga Consulting incluso attivato.');}}else{setMsg('msg',action==='grant'?'Accesso incluso attivato.':'Accesso incluso revocato.');}await load()}catch(e){setMsg('msg',e.message,true)}}"""
+if old not in s:
+    raise SystemExit("admin act function not found")
+s=s.replace(old,new,1)
+
+p.write_text(s)
+PY
+
 # vFiscal service worker: never cache auth, checkout or admin routes.
 cat > "$OUT/sw.js" <<'EOF'
-const CACHE = 'vfiscal-cloudflare-v2.7.0-20261005';
+const CACHE = 'vfiscal-cloudflare-v2.8.0-20261005';
 const DYNAMIC_PATHS = new Set([
   '/vfiscal-app','/vfiscal-app.html',
   '/acquista','/acquista.html',
@@ -283,7 +424,7 @@ cat > "$OUT/_headers" <<'EOF'
 EOF
 
 cat > "$OUT/release.txt" <<'EOF'
-vfiscal-release-2026-10-05-2.7.0
+vfiscal-release-2026-10-05-2.8.0
 EOF
 
 # Host-level redirect virgaconsulting.it -> www.virgaconsulting.it is managed outside Pages _redirects.
