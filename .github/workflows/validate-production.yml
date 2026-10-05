@@ -25,14 +25,14 @@ jobs:
       - name: Verify release
         run: |
           test -f dist/release.txt
-          grep -q "vfiscal-release-2026-10-03-2.6.5" dist/release.txt
+          grep -q "vfiscal-release-2026-10-05-2.7.0" dist/release.txt
           test -f dist/vfiscal-app.html
           test -f dist/acquista.html
           grep -q "window.VFISCAL_SUPABASE_URL" dist/vfiscal-app.html
-          grep -q "vfiscal-cloudflare-v2.6.5-20261003" dist/sw.js
+          grep -q "vfiscal-cloudflare-v2.7.0-20261005" dist/sw.js
       - name: Wait for Cloudflare production
         run: |
-          expected="vfiscal-release-2026-10-03-2.6.5"
+          expected="vfiscal-release-2026-10-05-2.7.0"
           for i in $(seq 1 30); do
             current="$(curl --fail --silent --show-error --location --max-time 10 https://www.virgaconsulting.it/release.txt 2>/dev/null || true)"
             if [ "$current" = "$expected" ]; then
@@ -48,7 +48,7 @@ jobs:
         run: |
           curl --fail --silent --show-error --location https://www.virgaconsulting.it/vfiscal-app | grep -q "Area personale"
           curl --fail --silent --show-error --location https://www.virgaconsulting.it/acquista | grep -q "Inizia il tuo anno con vFiscal"
-          curl --fail --silent --show-error --location https://www.virgaconsulting.it/sw.js | grep -q "vfiscal-cloudflare-v2.6.5-20261003"
+          curl --fail --silent --show-error --location https://www.virgaconsulting.it/sw.js | grep -q "vfiscal-cloudflare-v2.7.0-20261005"
 
       - name: Verify auth, cache and purchase API
         run: |
