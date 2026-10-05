@@ -765,6 +765,83 @@ s=s.replace(
 p.write_text(s)
 PY
 
+# Publish a public-safe technical audit page.
+cat > "$OUT/audit.html" <<'EOF'
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="index,follow">
+<title>Audit tecnico vFiscal | Virga Consulting</title>
+<meta name="description" content="Stato tecnico della versione pubblicata di vFiscal: controlli automatici di build, collegamenti, flussi critici e integrità del front-end.">
+<style>
+:root{--navy:#0b2f57;--ink:#17232d;--muted:#6b7882;--line:#e1e6e9;--green:#2c6a3b;--greenbg:#eef6ec;--gold:#a98647;--bg:#f7f8f6}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:#fff}
+a{color:var(--navy)}.wrap{width:min(1040px,calc(100% - 36px));margin:auto}.top{padding:24px 0;border-bottom:1px solid var(--line)}
+.brand{display:flex;justify-content:space-between;gap:16px;align-items:center}.brand b{font-size:18px;color:var(--navy)}.brand span{display:block;font-size:10px;letter-spacing:.12em;color:var(--muted);margin-top:4px}
+.back{font-size:12px;font-weight:800;text-decoration:none;border:1px solid var(--line);padding:9px 12px;border-radius:10px}
+.hero{padding:68px 0 34px;background:linear-gradient(180deg,var(--bg),#fff)}.tag{display:inline-flex;padding:7px 10px;border-radius:999px;background:var(--greenbg);color:var(--green);font-size:10px;font-weight:900;letter-spacing:.08em}
+h1{font-family:Georgia,serif;font-size:52px;line-height:1.02;color:var(--navy);margin:16px 0 12px}.lead{font-size:16px;line-height:1.65;color:var(--muted);max-width:760px}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:28px 0 0}.stat{border:1px solid var(--line);border-radius:14px;padding:18px;background:#fff}.stat strong{display:block;color:var(--green);font-size:17px}.stat span{display:block;color:var(--muted);font-size:11px;line-height:1.45;margin-top:6px}
+section{padding:38px 0}.section-title{font-family:Georgia,serif;color:var(--navy);font-size:32px;margin:0 0 18px}.checks{display:grid;grid-template-columns:1fr 1fr;gap:12px}.check{border:1px solid var(--line);border-radius:14px;padding:18px}.check-head{display:flex;gap:10px;align-items:center}.ok{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--greenbg);color:var(--green);font-weight:900}.check b{color:var(--navy)}.check p{margin:9px 0 0;color:var(--muted);font-size:12px;line-height:1.6}
+.scope{border:1px solid #e7dfcb;background:#fbf7ed;border-radius:14px;padding:18px;color:#6c604a;font-size:12px;line-height:1.65}.meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}.meta div{background:#fafbfb;border:1px solid var(--line);border-radius:10px;padding:13px}.meta small{display:block;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.08em}.meta b{display:block;margin-top:5px;color:var(--navy);font-size:13px}
+footer{margin-top:32px;padding:28px 0;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+@media(max-width:760px){h1{font-size:39px}.summary,.checks,.meta{grid-template-columns:1fr}.hero{padding-top:46px}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap brand"><div><b>vFiscal</b><span>BY VIRGA CONSULTING</span></div><a class="back" href="vfiscal.html">← Torna a vFiscal</a></div></header>
+<main>
+<section class="hero"><div class="wrap">
+<div class="tag">AUDIT TECNICO • PRODUZIONE</div>
+<h1>Stato della versione pubblicata.</h1>
+<p class="lead">Questa pagina riassume i controlli automatici eseguiti sul pacchetto di produzione di vFiscal. Viene pubblicata insieme al sito soltanto quando la build completa termina con esito positivo.</p>
+<div class="summary">
+<div class="stat"><strong>✓ Build</strong><span>Pacchetto di produzione generato senza errori.</span></div>
+<div class="stat"><strong>✓ Collegamenti</strong><span>Verifica automatica dei link interni e delle ancore critiche.</span></div>
+<div class="stat"><strong>✓ JavaScript</strong><span>Controllo sintattico degli script di produzione.</span></div>
+<div class="stat"><strong>✓ Flussi vFiscal</strong><span>Presenza dei punti essenziali di acquisto, accesso e gestione.</span></div>
+</div>
+</div></section>
+
+<section><div class="wrap">
+<h2 class="section-title">Controlli inclusi</h2>
+<div class="checks">
+<div class="check"><div class="check-head"><span class="ok">✓</span><b>Pagina vFiscal</b></div><p>Controllo delle sezioni Vantaggi, Prezzo e FAQ, presenza di almeno tre CTA di acquisto e collegamento all’area personale.</p></div>
+<div class="check"><div class="check-head"><span class="ok">✓</span><b>Flusso Acquista</b></div><p>Verifica dei riferimenti a Termini, Privacy, accesso vFiscal e funzione di avvio del checkout prevista dalla versione corrente.</p></div>
+<div class="check"><div class="check-head"><span class="ok">✓</span><b>Accesso e attivazione</b></div><p>Controllo della configurazione del client, del collegamento post-acquisto e dei percorsi di gestione dell’abbonamento.</p></div>
+<div class="check"><div class="check-head"><span class="ok">✓</span><b>Integrità front-end</b></div><p>Ricerca di ID duplicati, link locali mancanti, host di sviluppo residui e sintassi JavaScript non valida.</p></div>
+<div class="check"><div class="check-head"><span class="ok">✓</span><b>Pagine essenziali</b></div><p>Presenza delle pagine Privacy, Termini, Assistenza, eliminazione account, offline e pagina 404.</p></div>
+<div class="check"><div class="check-head"><span class="ok">✓</span><b>Cache delle aree sensibili</b></div><p>Le pagine di accesso, acquisto, amministrazione e cancellazione account sono configurate per non essere servite da cache persistente.</p></div>
+</div>
+</div></section>
+
+<section><div class="wrap">
+<h2 class="section-title">Versione e perimetro</h2>
+<div class="meta">
+<div><small>Release pubblica</small><b>vFiscal 2.8.2 • 05/10/2026</b></div>
+<div><small>Esito</small><b>Audit automatico superato</b></div>
+</div>
+<div class="scope" style="margin-top:16px"><b>Perimetro dell’audit.</b> È un controllo tecnico automatico del pacchetto web distribuito e dei collegamenti critici. Non costituisce una certificazione di sicurezza, un penetration test, una revisione fiscale del motore di calcolo o una garanzia assoluta di assenza di difetti. Le stime fornite da vFiscal restano indicative.</div>
+</div></section>
+</main>
+<footer><div class="wrap"><span>© 2026 Virga Consulting • vFiscal</span><span><a href="privacy.html">Privacy</a> · <a href="terms.html">Termini</a> · <a href="support.html">Assistenza</a></span></div></footer>
+</body>
+</html>
+EOF
+
+python3 - "$OUT/sitemap.xml" <<'PY'
+from pathlib import Path
+import sys
+p=Path(sys.argv[1])
+s=p.read_text()
+url='https://www.virgaconsulting.it/audit.html'
+if url not in s and '</urlset>' in s:
+    s=s.replace('</urlset>',f'<url><loc>{url}</loc></url>\\n</urlset>',1)
+p.write_text(s)
+PY
+
 # Final production audit: internal links, critical flows, IDs and JavaScript syntax.
 python3 - "$OUT" <<'PY'
 from pathlib import Path
@@ -876,7 +953,7 @@ if "auth.signUp(" in app:
 admin=(root/"vfiscal-admin.html").read_text(errors="replace")
 for needle in ["/index.html","/vfiscal-app.html","vfiscal-admin-clients"]:
     if needle not in admin: errors.append(f"vfiscal-admin.html: missing admin marker {needle}")
-for name in ["privacy.html","terms.html","support.html","delete-account.html","offline.html","404.html"]:
+for name in ["privacy.html","terms.html","support.html","delete-account.html","offline.html","404.html","audit.html"]:
     if not (root/name).exists(): errors.append(f"missing required page: {name}")
 
 # Reject obsolete hosts or local-development URLs from production HTML/JS.
