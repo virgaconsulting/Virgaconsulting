@@ -457,9 +457,113 @@ if 'vf-admin-simple-runtime' not in s:
 p.write_text(s)
 PY
 
+
+# vFiscal admin navigation bridge.
+python3 - "$OUT/vfiscal-admin.html" "$OUT/vfiscal-app.html" <<'PY'
+from pathlib import Path
+import sys, re
+
+admin=Path(sys.argv[1])
+app=Path(sys.argv[2])
+sa=admin.read_text()
+sv=app.read_text()
+
+# Admin page: permanent navigation back to public site / vFiscal.
+nav_style=r'''
+<style id="vf-admin-nav-style">
+.vf-admin-nav{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.vf-admin-nav a{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-radius:10px;padding:9px 12px;font-weight:800;font-size:12px}
+.vf-admin-nav .home{background:#fff;color:#0b3d70;border:1px solid #c8d2db}
+.vf-admin-nav .app{background:#0b3d70;color:#fff;border:1px solid #0b3d70}
+@media(max-width:520px){.vf-admin-nav a{flex:1 1 140px}}
+</style>
+'''
+if 'vf-admin-nav-style' not in sa:
+    sa=sa.replace('</head>',nav_style+'</head>',1)
+
+nav_html=r'''
+<div class="vf-admin-nav">
+  <a class="home" href="/index.html">← Torna al sito</a>
+  <a class="app" href="/vfiscal-app.html">Apri vFiscal</a>
+</div>
+'''
+# Put navigation directly under the admin intro/header area.
+if '← Torna al sito' not in sa:
+    m=re.search(r'(<h1>Gestione clienti</h1>\s*<p>.*?</p>)',sa,re.S)
+    if m:
+        sa=sa[:m.end()]+nav_html+sa[m.end():]
+    else:
+        sa=sa.replace('<body>','<body>'+nav_html,1)
+
+admin.write_text(sa)
+
+# vFiscal app: show a management button only when the logged-in account is an admin.
+admin_btn=r'''
+<a id="vfAdminShortcut" href="/vfiscal-admin.html" style="display:none;text-decoration:none;margin:10px 0 0;padding:10px 13px;border-radius:10px;background:#0b3d70;color:#fff;font-weight:800;font-size:12px;align-items:center;justify-content:center">Gestione clienti →</a>
+'''
+if 'id="vfAdminShortcut"' not in sv:
+    # Attach near the account section if present, otherwise before body end.
+    anchors=[
+      'ACCOUNT vFISCAL 2.0',
+      'Il tuo accesso vFiscal',
+      '</body>'
+    ]
+    inserted=False
+    for a in anchors:
+        pos=sv.find(a)
+        if pos!=-1:
+            if a=='</body>':
+                sv=sv.replace('</body>',admin_btn+'</body>',1)
+            else:
+                end=sv.find('</',pos)
+                if end!=-1:
+                    sv=sv[:end]+admin_btn+sv[end:]
+                else:
+                    sv=sv[:pos]+admin_btn+sv[pos:]
+            inserted=True
+            break
+
+probe=r'''
+<script id="vf-admin-shortcut-probe">
+async function vfRefreshAdminShortcut(){
+  const btn=document.getElementById('vfAdminShortcut');
+  if(!btn||!window.vfSupabase)return;
+  try{
+    const {data:{session}}=await vfSupabase.auth.getSession();
+    if(!session){btn.style.display='none';return}
+    const base=(window.VFISCAL_API_BASE||'').replace(/\/$/,'');
+    const res=await fetch(base+'/vfiscal-admin-clients',{
+      method:'POST',
+      headers:{
+        Authorization:'Bearer '+session.access_token,
+        apikey:window.VFISCAL_SUPABASE_ANON_KEY,
+        'Content-Type':'application/json'
+      },
+      body:JSON.stringify({action:'list'})
+    });
+    btn.style.display=res.ok?'inline-flex':'none';
+  }catch{
+    btn.style.display='none';
+  }
+}
+window.addEventListener('load',()=>setTimeout(vfRefreshAdminShortcut,700));
+</script>
+'''
+if 'vf-admin-shortcut-probe' not in sv:
+    sv=sv.replace('</body>',probe+'</body>',1)
+
+# Refresh shortcut after a successful login/session application.
+sv=sv.replace(
+    "await vfApplySession(data.session,'SIGNED_IN');",
+    "await vfApplySession(data.session,'SIGNED_IN'); setTimeout(vfRefreshAdminShortcut,250);"
+)
+
+app.write_text(sv)
+PY
+
 # vFiscal service worker: never cache auth, checkout or admin routes.
 cat > "$OUT/sw.js" <<'EOF'
-const CACHE = 'vfiscal-cloudflare-v2.8.1-20261005';
+const CACHE = 'vfiscal-cloudflare-v2.8.2-20261005';
 const DYNAMIC_PATHS = new Set([
   '/vfiscal-app','/vfiscal-app.html',
   '/acquista','/acquista.html',
@@ -583,7 +687,7 @@ cat > "$OUT/_headers" <<'EOF'
 EOF
 
 cat > "$OUT/release.txt" <<'EOF'
-vfiscal-release-2026-10-05-2.8.1
+vfiscal-release-2026-10-05-2.8.2
 EOF
 
 # Host-level redirect virgaconsulting.it -> www.virgaconsulting.it is managed outside Pages _redirects.
