@@ -298,9 +298,168 @@ s=s.replace(old,new,1)
 p.write_text(s)
 PY
 
+
+# vFiscal simplified studio admin UX.
+python3 - "$OUT/vfiscal-admin.html" <<'PY'
+from pathlib import Path
+import re, sys
+p=Path(sys.argv[1])
+s=p.read_text()
+
+style=r'''
+<style id="vf-admin-simple-ui">
+.simple-create{margin:8px 0 18px;padding:20px;border:1px solid #dfe6dc;border-radius:18px;background:#f7faf4}
+.simple-create-title{font:700 24px/1.15 Georgia,serif;color:#0b3d70;margin:0 0 5px}
+.simple-create-sub{margin:0 0 16px;color:#6f7d89;font-size:13px;line-height:1.5}
+.simple-create-row{display:grid;grid-template-columns:minmax(240px,1fr) auto;gap:10px;align-items:end}
+.simple-create-row label{margin-top:0}
+.simple-create-row .btn{min-height:44px;padding-left:22px;padding-right:22px}
+.created-client{display:none;margin:14px 0 0;padding:16px;border-radius:14px;background:#eef7ea;border:1px solid #cedfc7}
+.created-client.show{display:block}
+.created-client strong{display:block;color:#225d31;margin-bottom:7px}
+.credential-line{display:grid;grid-template-columns:115px minmax(0,1fr) auto;gap:8px;align-items:center;margin-top:7px}
+.credential-label{font-size:11px;font-weight:800;color:#687783;text-transform:uppercase;letter-spacing:.04em}
+.credential-value{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#fff;border:1px solid #d8e1d4;border-radius:9px;padding:9px 10px;overflow:auto}
+.copy-btn{border:1px solid #b7c8b2;background:#fff;color:#194d2a;border-radius:9px;padding:9px 11px;font-weight:800;cursor:pointer}
+.admin-advanced{margin:12px 0 22px;border:1px solid #e4dfd6;border-radius:14px;background:#fff}
+.admin-advanced summary{cursor:pointer;padding:13px 15px;font-weight:800;color:#31516f}
+.admin-advanced-body{padding:0 15px 15px}
+.admin-advanced-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.admin-advanced-actions .btn{width:auto}
+#msg:empty{display:none}
+@media(max-width:650px){
+  .simple-create-row{grid-template-columns:1fr}
+  .simple-create-row .btn{width:100%}
+  .credential-line{grid-template-columns:1fr}
+  .copy-btn{width:100%}
+}
+</style>
+'''
+if 'vf-admin-simple-ui' not in s:
+    s=s.replace('</head>',style+'</head>',1)
+
+# Rename the main everyday section.
+s=s.replace('Accesso incluso Virga Consulting','Nuovo cliente studio',1)
+s=s.replace(
+    'Usalo solo per clienti dello studio ai quali vFiscal è incluso senza pagamento separato.',
+    'Inserisci l’email del cliente. vFiscal creerà l’account gratuito dello Studio e ti mostrerà una password temporanea da consegnargli.',
+    1
+)
+s=s.replace('Clienti e iscrizioni','I tuoi clienti vFiscal',1)
+
+# Simplify the create area and move technical access actions under an expandable panel.
+pattern=r'''<div class="grant">\s*(<input[^>]*id="clientEmail"[^>]*>)\s*<button class="btn" onclick="act\('create'\)">Crea account incluso</button>\s*<button class="btn secondary" onclick="act\('grant'\)">Attiva incluso</button>\s*<button class="btn danger" onclick="act\('revoke'\)">Revoca incluso</button>\s*</div>'''
+replacement=r'''<div class="simple-create">
+        <h3 class="simple-create-title">Nuovo cliente studio</h3>
+        <p class="simple-create-sub">Crea in pochi secondi un account vFiscal incluso nel servizio Virga Consulting.</p>
+        <div class="simple-create-row">
+          <div><label for="clientEmail">Email cliente</label>\1</div>
+          <button class="btn" onclick="act('create')">+ Crea cliente</button>
+        </div>
+        <div id="createdClientResult" class="created-client">
+          <strong>✓ Cliente creato e vFiscal attivato</strong>
+          <div class="credential-line">
+            <span class="credential-label">Email</span>
+            <span id="createdClientEmail" class="credential-value">—</span>
+          </div>
+          <div id="createdPasswordLine" class="credential-line">
+            <span class="credential-label">Password</span>
+            <span id="createdClientPassword" class="credential-value">—</span>
+            <button type="button" class="copy-btn" onclick="copyTempPassword()">Copia password</button>
+          </div>
+          <div id="existingClientNote" class="small" style="display:none;margin-top:9px">Account già esistente: ho semplicemente attivato l’accesso incluso.</div>
+        </div>
+      </div>
+      <details class="admin-advanced">
+        <summary>Gestione accesso esistente</summary>
+        <div class="admin-advanced-body">
+          <div class="small">Usa queste azioni solo per un account già presente. L’email è quella inserita sopra.</div>
+          <div class="admin-advanced-actions">
+            <button class="btn secondary" onclick="act('grant')">Attiva accesso incluso</button>
+            <button class="btn danger" onclick="act('revoke')">Revoca accesso incluso</button>
+          </div>
+        </div>
+      </details>'''
+s,n=re.subn(pattern,replacement,s,count=1,flags=re.S)
+if n!=1:
+    raise SystemExit("simple admin create area not found")
+
+old="""async function act(action){try{const email=$('clientEmail').value.trim();if(!email)throw new Error('Inserisci l’email del cliente.');setMsg('msg',action==='create'?'Creazione account…':'Aggiornamento…');const out=await call({action,email});if(action==='create'){if(out.temporary_password){setMsg('msg','Account cliente creato e vFiscal incluso. Password temporanea: '+out.temporary_password+' — comunicala solo al cliente.');}else{setMsg('msg','Account già esistente: accesso Virga Consulting incluso attivato.');}}else{setMsg('msg',action==='grant'?'Accesso incluso attivato.':'Accesso incluso revocato.');}await load()}catch(e){setMsg('msg',e.message,true)}}"""
+new="""async function act(action){
+  try{
+    const email=$('clientEmail').value.trim();
+    if(!email)throw new Error('Inserisci l’email del cliente.');
+    setMsg('msg',action==='create'?'Creazione cliente…':'Aggiornamento…');
+    const out=await call({action,email});
+
+    if(action==='create'){
+      const box=$('createdClientResult'),emailEl=$('createdClientEmail'),passEl=$('createdClientPassword');
+      const passLine=$('createdPasswordLine'),existingNote=$('existingClientNote');
+      if(emailEl)emailEl.textContent=email;
+      if(box)box.classList.add('show');
+
+      if(out.temporary_password){
+        if(passEl)passEl.textContent=out.temporary_password;
+        if(passLine)passLine.style.display='grid';
+        if(existingNote)existingNote.style.display='none';
+        setMsg('msg','Cliente creato. Copia la password temporanea e comunicala al cliente.');
+      }else{
+        if(passEl)passEl.textContent='—';
+        if(passLine)passLine.style.display='none';
+        if(existingNote)existingNote.style.display='block';
+        setMsg('msg','Account già esistente: accesso incluso attivato.');
+      }
+    }else{
+      setMsg('msg',action==='grant'?'Accesso incluso attivato.':'Accesso incluso revocato.');
+    }
+    await load();
+  }catch(e){
+    setMsg('msg',e.message,true);
+  }
+}
+async function copyTempPassword(){
+  const value=$('createdClientPassword')?.textContent?.trim();
+  if(!value||value==='—')return;
+  try{
+    await navigator.clipboard.writeText(value);
+    setMsg('msg','Password temporanea copiata.');
+  }catch{
+    setMsg('msg','Seleziona e copia manualmente la password mostrata.',true);
+  }
+}"""
+if old not in s:
+    raise SystemExit("simple admin act function not found")
+s=s.replace(old,new,1)
+
+# Make technical outbound tools visually secondary.
+script=r'''
+<script id="vf-admin-simple-runtime">
+document.addEventListener('DOMContentLoaded',()=>{
+  const topActions=document.querySelector('.top-actions');
+  if(topActions && !topActions.closest('details')){
+    const details=document.createElement('details');
+    details.className='admin-advanced';
+    const summary=document.createElement('summary');
+    summary.textContent='Strumenti tecnici';
+    const body=document.createElement('div');
+    body.className='admin-advanced-body';
+    topActions.parentNode.insertBefore(details,topActions);
+    details.appendChild(summary);
+    details.appendChild(body);
+    body.appendChild(topActions);
+  }
+});
+</script>
+'''
+if 'vf-admin-simple-runtime' not in s:
+    s=s.replace('</body>',script+'</body>',1)
+
+p.write_text(s)
+PY
+
 # vFiscal service worker: never cache auth, checkout or admin routes.
 cat > "$OUT/sw.js" <<'EOF'
-const CACHE = 'vfiscal-cloudflare-v2.8.0-20261005';
+const CACHE = 'vfiscal-cloudflare-v2.8.1-20261005';
 const DYNAMIC_PATHS = new Set([
   '/vfiscal-app','/vfiscal-app.html',
   '/acquista','/acquista.html',
@@ -424,7 +583,7 @@ cat > "$OUT/_headers" <<'EOF'
 EOF
 
 cat > "$OUT/release.txt" <<'EOF'
-vfiscal-release-2026-10-05-2.8.0
+vfiscal-release-2026-10-05-2.8.1
 EOF
 
 # Host-level redirect virgaconsulting.it -> www.virgaconsulting.it is managed outside Pages _redirects.
