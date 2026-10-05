@@ -44,9 +44,10 @@ patch --batch --forward -p1 -d "$OUT" < /tmp/virga-runtime.patch
 patch --batch --forward -p1 -d "$OUT" < .deploy/polish.patch
 
 # Replace the verbose vFiscal sales page with the concise conversion-first version.
-python3 - <<'PY'
+python3 - "$OUT/vfiscal.html" <<'PY'
 from pathlib import Path
-p = Path("$OUT/vfiscal.html")
+import sys
+p = Path(sys.argv[1])
 html = p.read_text()
 css = Path(".deploy/vfiscal-sales.css").read_text()
 main = Path(".deploy/vfiscal-sales-main.html").read_text()
