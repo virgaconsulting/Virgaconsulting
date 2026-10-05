@@ -733,6 +733,175 @@ cat > "$OUT/release.txt" <<'EOF'
 vfiscal-release-2026-10-05-2.8.2
 EOF
 
+# Final production audit: internal links, critical flows, IDs and JavaScript syntax.
+python3 - "$OUT" <<'PY'
+from pathlib import Path
+from html.parser import HTMLParser
+from urllib.parse import urlsplit
+import re, sys
+
+root=Path(sys.argv[1])
+errors=[]
+reports=[]
+
+class Scan(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.ids=[]
+        self.links=[]
+        self.scripts=[]
+        self._in_script=False
+        self._script_attrs={}
+        self._script_buf=[]
+    def handle_starttag(self, tag, attrs):
+        a=dict(attrs)
+        if "id" in a: self.ids.append(a["id"])
+        for k in ("href","src"):
+            if k in a: self.links.append((tag,k,a[k]))
+        if tag=="script":
+            self._in_script=True
+            self._script_attrs=a
+            self._script_buf=[]
+    def handle_data(self,data):
+        if self._in_script:self._script_buf.append(data)
+    def handle_endtag(self,tag):
+        if tag=="script" and self._in_script:
+            if not self._script_attrs.get("src"):
+                self.scripts.append("".join(self._script_buf))
+            self._in_script=False
+            self._script_attrs={}
+            self._script_buf=[]
+
+html_files=sorted(root.glob("*.html"))
+id_map={}
+for page in html_files:
+    s=Scan()
+    text=page.read_text(errors="replace")
+    try:s.feed(text)
+    except Exception as e: errors.append(f"{page.name}: HTML parse error: {e}")
+    dup=sorted({x for x in s.ids if s.ids.count(x)>1})
+    if dup: errors.append(f"{page.name}: duplicate IDs: {dup}")
+    id_map[page.name]=set(s.ids)
+
+    for tag,k,raw in s.links:
+        raw=(raw or "").strip()
+        if not raw or raw.startswith(("#","mailto:","tel:","data:","javascript:")): continue
+        u=urlsplit(raw)
+        if u.scheme in ("http","https"): continue
+        path=u.path
+        if not path: continue
+        target=(root/path.lstrip("/")) if path.startswith("/") else (page.parent/path)
+        if path.endswith("/"): target=target/"index.html"
+        if not target.exists():
+            errors.append(f"{page.name}: broken local {k} -> {raw}")
+        if u.fragment and target.suffix==".html" and target.exists():
+            target_name=target.name
+            if target_name not in id_map:
+                ss=Scan(); ss.feed(target.read_text(errors="replace")); id_map[target_name]=set(ss.ids)
+            if u.fragment not in id_map[target_name]:
+                errors.append(f"{page.name}: missing anchor #{u.fragment} in {target_name}")
+
+# Critical vFiscal sales page.
+sales=(root/"vfiscal.html").read_text(errors="replace")
+for needle in ['id="vantaggi"','id="prezzo"','id="faq"','href="acquista.html"','href="vfiscal-app.html"']:
+    if needle not in sales: errors.append(f"vfiscal.html: missing {needle}")
+if sales.count('href="acquista.html"') < 3:
+    errors.append("vfiscal.html: fewer than 3 purchase CTAs")
+if sales.count("<details") < 8:
+    errors.append("vfiscal.html: FAQ set unexpectedly small")
+reports.append(f"sales_cta_count={sales.count('href=\"acquista.html\"')}")
+reports.append(f"faq_count={sales.count('<details')}")
+
+# Purchase page / Stripe handoff.
+purchase=(root/"acquista.html").read_text(errors="replace")
+for needle in [
+    "vfiscal-start-purchase",
+    'href="terms.html"',
+    'href="privacy.html"',
+    'href="vfiscal-app.html"',
+    'href="vfiscal.html"',
+    "terms_accepted:true"
+]:
+    if needle not in purchase: errors.append(f"acquista.html: missing purchase-flow marker {needle}")
+if "vfiscal-public-checkout" in purchase:
+    errors.append("acquista.html: obsolete checkout endpoint still referenced")
+
+# Auth/activation app.
+app=(root/"vfiscal-app.html").read_text(errors="replace")
+for needle in [
+    "window.VFISCAL_SUPABASE_URL",
+    "window.VFISCAL_SUPABASE_ANON_KEY",
+    "vfiscal-register-paid",
+    "vfiscal-claim-purchase",
+    "vfiscal-create-portal",
+    "vfiscal-admin.html"
+]:
+    if needle not in app: errors.append(f"vfiscal-app.html: missing app marker {needle}")
+if "auth.signUp(" in app:
+    errors.append("vfiscal-app.html: public direct Supabase signUp exposed")
+
+# Admin / legal / support routes.
+admin=(root/"vfiscal-admin.html").read_text(errors="replace")
+for needle in ["/index.html","/vfiscal-app.html","vfiscal-admin-clients"]:
+    if needle not in admin: errors.append(f"vfiscal-admin.html: missing admin marker {needle}")
+for name in ["privacy.html","terms.html","support.html","delete-account.html","offline.html","404.html"]:
+    if not (root/name).exists(): errors.append(f"missing required page: {name}")
+
+# Reject obsolete hosts or local-development URLs from production HTML/JS.
+for p in list(root.glob("*.html"))+list((root/"src").glob("*.js"))+[root/"sw.js"]:
+    t=p.read_text(errors="replace")
+    for bad in ["localhost","127.0.0.1","virga-consulting.vito-virga30.chatgpt.site"]:
+        if bad in t: errors.append(f"{p.relative_to(root)}: obsolete/development host found: {bad}")
+
+if errors:
+    print("PRODUCTION AUDIT FAILED")
+    for e in errors: print(" -",e)
+    raise SystemExit(1)
+
+print("PRODUCTION AUDIT PASSED")
+for r in reports: print(" -",r)
+PY
+
+# Syntax-check JavaScript when Node is available in the Pages build image.
+if command -v node >/dev/null 2>&1; then
+  node --check "$OUT/sw.js"
+  for js in "$OUT"/src/*.js; do
+    [ -f "$js" ] && node --check "$js"
+  done
+  python3 - "$OUT" <<'PY'
+from pathlib import Path
+from html.parser import HTMLParser
+import subprocess, tempfile, sys
+
+root=Path(sys.argv[1])
+class Scripts(HTMLParser):
+    def __init__(self):
+        super().__init__(); self.in_script=False; self.attrs={}; self.buf=[]; self.blocks=[]
+    def handle_starttag(self,tag,attrs):
+        if tag=="script": self.in_script=True; self.attrs=dict(attrs); self.buf=[]
+    def handle_data(self,data):
+        if self.in_script:self.buf.append(data)
+    def handle_endtag(self,tag):
+        if tag=="script" and self.in_script:
+            if not self.attrs.get("src") and self.attrs.get("type","text/javascript") not in ("application/ld+json","application/json"):
+                code="".join(self.buf).strip()
+                if code:self.blocks.append(code)
+            self.in_script=False; self.attrs={}; self.buf=[]
+for page in root.glob("*.html"):
+    p=Scripts(); p.feed(page.read_text(errors="replace"))
+    for i,code in enumerate(p.blocks):
+        with tempfile.NamedTemporaryFile("w",suffix=".js",delete=False) as f:
+            f.write(code); name=f.name
+        r=subprocess.run(["node","--check",name],capture_output=True,text=True)
+        Path(name).unlink(missing_ok=True)
+        if r.returncode:
+            print(f"JavaScript syntax error in {page.name} inline script #{i+1}")
+            print(r.stderr)
+            raise SystemExit(1)
+print("JAVASCRIPT SYNTAX AUDIT PASSED")
+PY
+fi
+
 # Host-level redirect virgaconsulting.it -> www.virgaconsulting.it is managed outside Pages _redirects.
 
 grep -q 'VIRGA_BUILD: 2026-10-03-final-cloudflare' "$OUT/index.html"
