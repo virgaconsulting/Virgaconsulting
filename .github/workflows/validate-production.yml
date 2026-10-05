@@ -25,6 +25,9 @@ jobs:
       - name: Inspect registration flow
         run: |
           sed -n '3270,3345p' dist/vfiscal-app.html
+      - name: Inspect admin actions
+        run: |
+          grep -n -E "vfiscal-admin-clients|grant|revoke|included|admin" dist/vfiscal-admin.html | tail -80
       - name: Verify release
         run: |
           test -f dist/release.txt
