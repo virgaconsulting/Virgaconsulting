@@ -42,6 +42,27 @@ done
 cat .deploy/runtime.patch.gz.b64.* | tr -d '\n\r' | base64 --decode | gzip --decompress > /tmp/virga-runtime.patch
 patch --batch --forward -p1 -d "$OUT" < /tmp/virga-runtime.patch
 patch --batch --forward -p1 -d "$OUT" < .deploy/polish.patch
+
+# Replace the verbose vFiscal sales page with the concise conversion-first version.
+python3 - <<'PY'
+from pathlib import Path
+p = Path("$OUT/vfiscal.html")
+html = p.read_text()
+css = Path(".deploy/vfiscal-sales.css").read_text()
+main = Path(".deploy/vfiscal-sales-main.html").read_text()
+if '<style id="vfiscal-sales-redesign">' not in html:
+    html = html.replace('</head>', '<style id="vfiscal-sales-redesign">\\n' + css + '\\n</style>\\n</head>')
+start = html.find('<main>')
+end = html.find('</main>')
+if start == -1 or end == -1 or end < start:
+    raise SystemExit("vfiscal.html main section not found")
+html = html[:start] + main + html[end+7:]
+old_nav = '<a href="index.html">Studio</a><a href="#anteprima">Funzioni</a><a href="#esempio-completo">Esempio</a><a href="#come-funziona">Come funziona</a><a href="#acquista">Prezzo</a><a href="acquista.html">Acquista</a>'
+new_nav = '<a href="index.html">Studio</a><a href="#vantaggi">Funzioni</a><a href="#faq">FAQ</a><a href="#prezzo">Prezzo</a><a href="acquista.html">Acquista</a>'
+html = html.replace(old_nav, new_nav)
+p.write_text(html)
+PY
+
 for name in dashboard-workspace purchase-experience landing-preview; do
   base64 --decode ".deploy/${name}.patch.gz.b64" | gzip --decompress > "/tmp/${name}.patch"
   patch --batch --forward -p1 -d "$OUT" < "/tmp/${name}.patch"
