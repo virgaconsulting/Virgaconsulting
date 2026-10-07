@@ -114,3 +114,19 @@ jobs:
             --data '{"email":"qa-vfiscal@example.com","terms_accepted":false}')"
           test "$status" = "400"
           grep -q "Termini di servizio" /tmp/no-terms.json
+
+      - name: Verify canonical domain and public essentials
+        run: |
+          set -e
+          final="$(curl --fail --silent --show-error --location --output /dev/null --write-out "%{url_effective}" https://virgaconsulting.it)"
+          test "$final" = "https://www.virgaconsulting.it/"
+
+          final_path="$(curl --fail --silent --show-error --location --output /dev/null --write-out "%{url_effective}" "https://virgaconsulting.it/vfiscal.html?health=1")"
+          test "$final_path" = "https://www.virgaconsulting.it/vfiscal?health=1"
+
+          curl --fail --silent --show-error --location https://www.virgaconsulting.it/privacy | grep -q "Informativa privacy vFiscal"
+          curl --fail --silent --show-error --location https://www.virgaconsulting.it/terms | grep -q "Termini di servizio vFiscal"
+          curl --fail --silent --show-error --location https://www.virgaconsulting.it/support | grep -q "Assistenza"
+
+          status="$(curl --silent --show-error --output /dev/null --write-out "%{http_code}" https://www.virgaconsulting.it/this-page-should-not-exist-healthcheck)"
+          test "$status" = "404"
