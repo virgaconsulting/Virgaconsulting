@@ -967,6 +967,24 @@ s=re.sub(r'(?s)\\s*<url>\\s*<loc>https://www\\.virgaconsulting\\.it/audit(?:\\.h
 p.write_text(s)
 PY
 
+
+# vFiscal private messaging assets and authenticated customer/studio UI.
+mkdir -p "$OUT/site-assets"
+cp site-assets/vfiscal-support.js "$OUT/site-assets/vfiscal-support.js"
+python3 - "$OUT/vfiscal-app.html" "$OUT/vfiscal-admin.html" <<'PY'
+from pathlib import Path
+import sys
+tag='<script type="module" src="/site-assets/vfiscal-support.js"></script>'
+for item in sys.argv[1:]:
+    p=Path(item)
+    html=p.read_text()
+    if tag not in html:
+        if '</body>' not in html:
+            raise SystemExit(f"{p}: missing body closing tag for messaging module")
+        html=html.replace('</body>',tag+'\n</body>',1)
+        p.write_text(html)
+PY
+
 # Final production audit: internal links, critical flows, IDs and JavaScript syntax.
 python3 - "$OUT" <<'PY'
 from pathlib import Path
