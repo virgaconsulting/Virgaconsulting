@@ -812,6 +812,85 @@ s=s.replace(
 p.write_text(s)
 PY
 
+# Simplified substitute-tax rate: the user selects 5% or 15% directly.
+# This updates only the generated frontend. Existing profiles, receipts and
+# fiscal-year data are not migrated or deleted.
+python3 - "$OUT/vfiscal-app.html" <<'PY'
+from pathlib import Path
+import re,sys
+p=Path(sys.argv[1])
+s=p.read_text()
+
+def replace_one(pattern, replacement, label, flags=re.S):
+    global s
+    s,n=re.subn(pattern,lambda m:replacement,s,count=1,flags=flags)
+    if n!=1: raise SystemExit(f"Rate UI update failed: {label}: {n} matches")
+
+replace_one(
+    r'<div id="startup5Check" class="simple-note"[^>]*>.*?</div>\s*<div class="help">vFiscal applica il 5% solo dopo la conferma dei requisiti; la verifica definitiva resta documentale.</div>',
+    '<div class="help">Seleziona l’aliquota che si applica alla tua posizione: 5% oppure 15%. vFiscal non verifica automaticamente i requisiti fiscali.</div>',
+    'initial setup requirements'
+)
+replace_one(
+    r'<div class="wide simple-note" id="profileStartup5Wrap"[^>]*>.*?</div>',
+    '',
+    'profile requirements'
+)
+replace_one(
+    r'function chooseRate\(r\)\s*\{.*?^\}',
+    """function chooseRate(r){
+  state.rate=r;
+  document.getElementById('rate5').classList.toggle('selected',r===5);
+  document.getElementById('rate15').classList.toggle('selected',r===15);
+}""",
+    'wizard rate selection',re.S|re.M
+)
+replace_one(
+    r'function validateRateStep\(\)\s*\{.*?^\}',
+    """function validateRateStep(){
+  if(state.rate!==5 && state.rate!==15){alert('Seleziona il 5% o il 15%.');return;}
+  nextStep();
+}""",
+    'wizard rate confirmation',re.S|re.M
+)
+replace_one(
+    r'function vfToggleProfileStartupOptions\(\)\s*\{.*?^\}',
+    """function vfToggleProfileStartupOptions(){
+  // Only the selected 5% / 15% rate is needed.
+}""",
+    'profile rate selection',re.S|re.M
+)
+replace_one(
+    r'function evaluateStartupRate\(input, rules = RULES_IT_2026\)\s*\{.*?^\}',
+    """function evaluateStartupRate(input, rules = RULES_IT_2026) {
+  const chosen = Number(input?.startup?.requestedRate);
+  const isFive = chosen === 5 || Math.abs(chosen - rules.forfettario.startupRate) < EPS;
+  const rate = isFive ? rules.forfettario.startupRate : rules.forfettario.ordinaryRate;
+  return {rate, status: isFive ? '5%' : '15%',
+    reason: 'Aliquota selezionata nel profilo fiscale: verifica autonoma dei requisiti.'};
+}""",
+    'tax-rate calculation',re.S|re.M
+)
+replace_one(
+    r"(?m)^[^\n]*if\(taxRate===5\s*&&\s*\(startYear<2022[^\n]*\n",
+    '',
+    'remove fiscal-start-year rate blocking',0
+)
+replace_one(
+    r"(?m)^[^\n]*if\(taxRate===5&&\(!startupNoPriorBusiness3Years[^\n]*\n",
+    '',
+    'remove profile requirement blocking',0
+)
+old="5% applicata perché i requisiti dichiarati risultano soddisfatti."
+if s.count(old)!=1: raise SystemExit("Rate dashboard alert text not found exactly once")
+s=s.replace(old,"5% impostata nel profilo fiscale: verifica che sia applicabile alla tua posizione.",1)
+if 'id="startup5Check"' in s or 'id="profileStartup5Wrap"' in s:
+    raise SystemExit("Rate requirement controls still in production")
+if 'Non posso salvare il 5%' in s or 'Per applicare il 5% devi confermare' in s:
+    raise SystemExit("Rate requirement validation still in production")
+p.write_text(s)
+PY
+
 # Publish a public-safe technical audit page.
 cat > "$OUT/audit.html" <<'EOF'
 <!doctype html>
