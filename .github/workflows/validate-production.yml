@@ -29,7 +29,7 @@ jobs:
           s=Path('dist/vfiscal-app.html').read_text()
           wanted=['evaluateStartupRate','validateRateStep','chooseRate','vfToggleProfileStartupOptions','vfToggleStartupTakeover','saveProfile','vfSaveProfile','vfModelToProfile','vfModelToDb','vfBuildInput','vfCalc','nextStep','vfRenderProfile','vfRenderProfileForm','vfUpdateProfile','vfSyncProfile','vfSelectedStartupRate']
           for name in wanted:
-              m=re.search(r'(?:async\\s+)?function\\s+'+name+r'\\s*\\(',s)
+              m=re.search(r'(?:async\s+)?function\s+'+re.escape(name)+r'\s*\(',s)
               if not m:
                   print("FUNCTION_MISSING",name);continue
               start=m.start(); brace=s.find('{',m.end()); depth=0; in_str=None;escape=False;end=None
