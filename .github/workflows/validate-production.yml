@@ -32,6 +32,7 @@ jobs:
               assert obsolete not in s,'Unexpected tax-rate requirement: '+obsolete
           print('Direct 5%/15% rate selections and requirement removal: PASS')
           PY
+          curl --fail --silent --show-error --location https://www.virgaconsulting.it/vfiscal-app | grep -q 'vFiscal non verifica automaticamente i requisiti fiscali'
       - name: Verify release
         run: |
           test -f dist/release.txt
