@@ -21,38 +21,16 @@ jobs:
         run: bash -n build.sh
       - name: Build production bundle
         run: bash build.sh
-      - name: Diagnostic tax rate exact functions (temporary)
+      - name: Verify direct 5% and 15% selection
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re
           s=Path('dist/vfiscal-app.html').read_text()
-          wanted=['evaluateStartupRate','validateRateStep','chooseRate','vfToggleProfileStartupOptions','vfToggleStartupTakeover','saveProfile','vfSaveProfile','vfModelToProfile','vfModelToDb','vfBuildInput','vfCalc','nextStep','vfRenderProfile','vfRenderProfileForm','vfUpdateProfile','vfSyncProfile','vfSelectedStartupRate']
-          for name in wanted:
-              m=re.search(r'(?:async\s+)?function\s+'+re.escape(name)+r'\s*\(',s)
-              if not m:
-                  print("FUNCTION_MISSING",name);continue
-              start=m.start(); brace=s.find('{',m.end()); depth=0; in_str=None;escape=False;end=None
-              for i in range(brace,len(s)):
-                  c=s[i]
-                  if in_str:
-                      if escape:escape=False
-                      elif c=='\\\\':escape=True
-                      elif c==in_str:in_str=None
-                  elif c in ('"',"'","`"):in_str=c
-                  elif c=='{':depth+=1
-                  elif c=='}':
-                      depth-=1
-                      if depth==0:end=i+1;break
-              if end:
-                  print("FUNCTION_BEGIN",name,start,end)
-                  print(s[start:end][:7000])
-                  print("FUNCTION_END",name)
-          for needle in ["id=\"startup5Check\"","id=\"profileStartup5Wrap\"","function vfSaveProfile","startupNoPriorBusiness3Years:","function buildTaxInput","function evaluateStartupRate","function calculateTaxes","function simulate"]:
-              pos=s.find(needle)
-              print("CONTEXT_BEGIN",needle,pos)
-              if pos>=0:print(s[max(0,pos-450):pos+3000])
-              print("CONTEXT_END",needle)
+          for marker in ['id="rate5"','id="rate15"','<option value="5">5%</option><option value="15">15%</option>','Aliquota selezionata nel profilo fiscale','Seleziona l’aliquota che si applica alla tua posizione']:
+              assert marker in s, 'Missing rate selector: '+marker
+          for obsolete in ['id="startup5Check"','id="profileStartup5Wrap"','Non posso salvare il 5%','Per applicare il 5% devi confermare','Fuori dalla finestra quinquennale dell’aliquota start-up']:
+              assert obsolete not in s,'Unexpected tax-rate requirement: '+obsolete
+          print('Direct 5%/15% rate selections and requirement removal: PASS')
           PY
       - name: Verify release
         run: |
