@@ -819,7 +819,7 @@ cat > "$OUT/audit.html" <<'EOF'
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="index,follow">
+<meta name="robots" content="noindex,nofollow">
 <title>Audit tecnico vFiscal | Virga Consulting</title>
 <meta name="description" content="Stato tecnico della versione pubblicata di vFiscal: controlli automatici di build, collegamenti, flussi critici e integrità del front-end.">
 <style>
@@ -878,14 +878,13 @@ footer{margin-top:32px;padding:28px 0;border-top:1px solid var(--line);font-size
 </html>
 EOF
 
+# Keep the technical audit accessible by direct link, but out of search results.
 python3 - "$OUT/sitemap.xml" <<'PY'
 from pathlib import Path
-import sys
+import re, sys
 p=Path(sys.argv[1])
 s=p.read_text()
-url='https://www.virgaconsulting.it/audit.html'
-if url not in s and '</urlset>' in s:
-    s=s.replace('</urlset>',f'<url><loc>{url}</loc></url>\\n</urlset>',1)
+s=re.sub(r'(?s)\\s*<url>\\s*<loc>https://www\\.virgaconsulting\\.it/audit(?:\\.html)?</loc>.*?</url>', '', s)
 p.write_text(s)
 PY
 
