@@ -1,0 +1,28 @@
+name: Validate vFiscal private messaging
+on:
+  pull_request:
+    paths:
+      - 'build.sh'
+      - 'site-assets/vfiscal-support.js'
+      - '.github/workflows/validate-support.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-and-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate shell
+        run: bash -n build.sh
+      - name: Build site
+        run: bash build.sh
+      - name: Validate messaging integration
+        run: |
+          test -f dist/site-assets/vfiscal-support.js
+          grep -q 'src="/site-assets/vfiscal-support.js"' dist/vfiscal-app.html
+          grep -q 'src="/site-assets/vfiscal-support.js"' dist/vfiscal-admin.html
+          grep -q 'support_messages' dist/site-assets/vfiscal-support.js
+          grep -q 'vf_support_inbox' dist/site-assets/vfiscal-support.js
+          node --check dist/site-assets/vfiscal-support.js
