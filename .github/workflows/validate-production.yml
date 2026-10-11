@@ -21,6 +21,22 @@ jobs:
         run: bash -n build.sh
       - name: Build production bundle
         run: bash build.sh
+      - name: Diagnostic tax-rate form (temporary)
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          s=Path('dist/vfiscal-app.html').read_text()
+          terms=['agevolat','5%','15%','requisit','startup','prior_business','not_mere','takes_over','predecessor','imposta sostitutiva','taxRate','rate']
+          matches=[]
+          for term in terms:
+              for m in list(re.finditer(re.escape(term),s,re.I))[:12]:
+                  pos=m.start()
+                  if any(abs(pos-old)<130 for old in matches):continue
+                  matches.append(pos)
+                  print("FORM_SNIPPET",term,pos,repr(s[max(0,pos-380):pos+420]))
+          print("MATCH_COUNT",len(matches))
+          PY
       - name: Verify release
         run: |
           test -f dist/release.txt
