@@ -41,7 +41,7 @@ setInterval(refreshAdmin,2500);setInterval(()=>{if(box.style.display==='block')i
 
 
 /* vFiscal: progressive dashboard visualization layer. Only displays actual UI values. */
-if (/\\/vfiscal-app(?:\\.html)?$/.test(location.pathname)) {
+if (location.pathname.includes('vfiscal-app')) {
 (() => {
   const id='vf-visual-analytics';
   const css=document.createElement('style');
