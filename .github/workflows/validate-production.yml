@@ -39,8 +39,13 @@ jobs:
           grep -q 'La tua attività, in grafici' site-assets/vfiscal-support.js
           grep -q 'vf-visual-analytics' dist/site-assets/vfiscal-support.js
           grep -q 'site-assets/vfiscal-support.js' dist/vfiscal-app.html
-      - name: Inspect fiscal data bindings
-        run: python3 scripts/inspect-dashboard.py
+      - name: Validate live-model chart integration
+        run: |
+          grep -q 'window.vfAnalyticsSnapshot' dist/vfiscal-app.html
+          grep -q 'VFISCAL_MODEL_READY' dist/vfiscal-app.html
+          grep -q 'VFISCAL_AUTH_USER' dist/vfiscal-app.html
+          grep -q 'values.map((v,i)' dist/site-assets/vfiscal-support.js
+          grep -q 'window.vfAnalyticsSnapshot' dist/site-assets/vfiscal-support.js
       - name: Verify release
         run: |
           test -f dist/release.txt
