@@ -39,6 +39,8 @@ jobs:
           grep -q 'La tua attività, in grafici' site-assets/vfiscal-support.js
           grep -q 'vf-visual-analytics' dist/site-assets/vfiscal-support.js
           grep -q 'site-assets/vfiscal-support.js' dist/vfiscal-app.html
+      - name: Inspect fiscal data bindings
+        run: python3 scripts/inspect-dashboard.py
       - name: Verify release
         run: |
           test -f dist/release.txt
