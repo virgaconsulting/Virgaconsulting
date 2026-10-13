@@ -38,3 +38,97 @@ async function refreshAdmin(){const s=await getSession(),id=s?.user?.id||'';if(i
 setInterval(refreshAdmin,2500);setInterval(()=>{if(box.style.display==='block')inbox()},23000);db.auth.onAuthStateChange(()=>{last='';setTimeout(refreshAdmin,100)});refreshAdmin();
 }
 }
+
+
+/* vFiscal: progressive dashboard visualization layer. Only displays actual UI values. */
+if (/\\/vfiscal-app(?:\\.html)?$/.test(location.pathname)) {
+(() => {
+  const id='vf-visual-analytics';
+  const css=document.createElement('style');
+  css.textContent=`
+  #vf-visual-analytics{margin:22px 0;padding:22px;border:1px solid #dce6f3;border-radius:22px;background:linear-gradient(125deg,#f8fbff,#fff);color:#153557;font:14px Inter,system-ui,sans-serif}
+  #vf-visual-analytics *{box-sizing:border-box}
+  #vf-visual-analytics h2{font:700 25px/1.25 Inter,system-ui,sans-serif;margin:0;color:#12395e}
+  #vf-visual-analytics .vf-v-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+  #vf-visual-analytics .vf-v-desc{font-size:12px;color:#71859b;margin-top:6px}
+  #vf-visual-analytics .vf-v-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+  #vf-visual-analytics .vf-v-box{background:white;padding:19px;border:1px solid #e5ecf5;border-radius:18px;min-width:0}
+  #vf-visual-analytics .vf-v-box h3{margin:0 0 8px;color:#12395e;font:750 15px Inter,system-ui,sans-serif}
+  #vf-visual-analytics .vf-v-sub{color:#71859b;font-size:12px;margin:0 0 14px}
+  #vf-visual-analytics .vf-v-track{height:14px;border-radius:20px;overflow:hidden;background:#eaf0f9}
+  #vf-visual-analytics .vf-v-fill{height:100%;width:0;background:linear-gradient(90deg,#3266c7,#7564dd);transition:width .5s}
+  #vf-visual-analytics .vf-v-ring{width:154px;height:154px;border-radius:50%;display:grid;place-items:center;margin:6px auto;background:conic-gradient(#5869dc 0 0,#40bfa7 0 0,#e9edf7 0)}
+  #vf-visual-analytics .vf-v-ring-inner{background:white;border-radius:50%;width:112px;height:112px;display:grid;place-items:center;text-align:center}
+  #vf-visual-analytics .vf-v-number{font-size:20px;font-weight:800;display:block;color:#12395e}
+  #vf-visual-analytics .vf-v-meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;margin-top:11px;color:#59728d}
+  #vf-visual-analytics .vf-v-empty{color:#8091a3;font-size:13px;margin-top:13px}
+  #vf-visual-analytics .vf-v-link{display:inline-flex;gap:6px;padding:10px 13px;border-radius:10px;background:#154b86;color:white;border:0;text-decoration:none;font:700 12px Inter,system-ui,sans-serif;cursor:pointer}
+  #vf-visual-analytics .vf-v-link.secondary{color:#154b86;background:#e9f1fb}
+  #vf-visual-analytics .vf-v-actions{display:flex;gap:8px;flex-wrap:wrap}
+  @media(max-width:740px){#vf-visual-analytics{padding:15px}#vf-visual-analytics .vf-v-grid{grid-template-columns:1fr}}
+  `;
+  document.head.append(css);
+  const panel=document.createElement('section');
+  panel.id=id;panel.setAttribute('aria-label','Grafici fiscali');
+  panel.innerHTML=`<div class="vf-v-head"><div><h2>La tua attività, in grafici</h2><div class="vf-v-desc">Visualizzazioni indicative basate sui dati visibili della dashboard.</div></div><div class="vf-v-actions"><button type="button" class="vf-v-link secondary" data-action="refresh">Aggiorna grafici ↻</button><button type="button" class="vf-v-link" data-action="register">+ Registra incasso</button></div></div><div class="vf-v-grid"><div class="vf-v-box"><h3>Imposta e contributi</h3><p class="vf-v-sub">Composizione del carico fiscale stimato</p><div class="vf-v-ring"><div class="vf-v-ring-inner"><div><span class="vf-v-number" data-val="total">—</span><small>Totale stimato</small></div></div></div><div class="vf-v-meta"><span data-val="tax">Imposta: —</span><span data-val="social">Contributi: —</span></div></div><div class="vf-v-box"><h3>Fondo tasse</h3><p class="vf-v-sub">Quanto hai già accantonato rispetto alla stima</p><span class="vf-v-number" data-val="reserve">—</span><div class="vf-v-track" style="margin-top:16px"><div class="vf-v-fill" data-fill="reserve"></div></div><div class="vf-v-meta"><span data-val="held">Già accantonato: —</span><span data-val="remaining">Da accantonare: —</span></div></div><div class="vf-v-box"><h3>Soglia del forfettario</h3><p class="vf-v-sub">Incassi dichiarati nella dashboard, rispetto al limite ordinario</p><span class="vf-v-number" data-val="receipts">—</span><div class="vf-v-track" style="margin-top:16px"><div class="vf-v-fill" data-fill="threshold"></div></div><div class="vf-v-meta"><span data-val="threshold">Limite 85.000 €</span><span data-val="margin">Margine: —</span></div></div><div class="vf-v-box"><h3>Andamento degli incassi</h3><p class="vf-v-sub">Riepilogo mensile, disponibile quando i movimenti datati sono leggibili</p><div data-area="monthly" class="vf-v-empty">Registra incassi datati per visualizzare l'andamento mensile.</div></div></div>`;
+  let last='',reading=false;
+  const euro=v=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(v);
+  const amount=t=>{const m=String(t||'').match(/(?:€\\s*)?(-?\\d{1,3}(?:\\.\\d{3})*(?:,\\d{1,2})|-?\\d+(?:,\\d{1,2})?)\\s*€?/);if(!m)return null;const n=Number(m[1].replace(/\\./g,'').replace(',','.'));return Number.isFinite(n)&&n>=0?n:null};
+  const get=(label)=>{
+    const els=[...document.querySelectorAll('main *, .app *, body *')].filter(x=>x!==panel&&!panel.contains(x)&&x.children.length<=1&&x.textContent?.trim().toLowerCase()===label.toLowerCase());
+    for(const el of els){
+      let p=el.parentElement;
+      for(let i=0;i<3&&p;i++,p=p.parentElement){
+        const candidates=[...p.querySelectorAll('strong,b,[class*="value"],[class*="amount"]')].filter(x=>x!==el&&!el.contains(x));
+        for(const x of candidates){const v=amount(x.textContent);if(v!==null)return v;}
+      }
+    }
+    return null;
+  };
+  const put=(key,val)=>{const el=panel.querySelector('[data-val="'+key+'"]');if(el)el.textContent=val};
+  const fill=(key,n)=>{const el=panel.querySelector('[data-fill="'+key+'"]');if(el)el.style.width=Math.max(0,Math.min(100,n))+'%'};
+  function update(){
+    if(reading||!panel.isConnected)return;reading=true;
+    try {
+      const tax=get('Imposta stimata')??get('Imposta sostitutiva');
+      const social=get('Contributi stimati')??get('Contributi previdenziali');
+      const held=get('Fondo tasse già accantonato');
+      const receipts=get('Incassi 2026')??get('Incassi dell’anno')??get('Incassi anno')??get('Incassi');
+      const total=tax!==null&&social!==null?tax+social:null;
+      put('tax','Imposta: '+(tax===null?'—':euro(tax)));
+      put('social','Contributi: '+(social===null?'—':euro(social)));
+      put('total',total===null?'—':euro(total));
+      const ring=panel.querySelector('.vf-v-ring');
+      if(total!==null&&total>0){const percent=tax/total*100;ring.style.background='conic-gradient(#5869dc 0 '+percent+'%,#40bfa7 '+percent+'% 100%)'}
+      else ring.style.background='#e9edf7';
+      put('held','Già accantonato: '+(held===null?'—':euro(held)));
+      put('remaining','Da accantonare: '+(total===null||held===null?'—':euro(Math.max(0,total-held))));
+      put('reserve',total===null||held===null?'—':Math.round(total>0?held/total*100:100)+'% del fabbisogno');
+      fill('reserve',total!==null&&held!==null?(total>0?held/total*100:100):0);
+      put('receipts',receipts===null?'—':euro(receipts));
+      const cap=85000;
+      put('margin','Margine: '+(receipts===null?'—':euro(Math.max(0,cap-receipts))));
+      fill('threshold',receipts===null?0:receipts/cap*100);
+      put('threshold','Soglia ordinaria: '+euro(cap));
+    }finally{reading=false}
+  }
+  function attach(){
+    if(panel.isConnected)return;
+    const headings=[...document.querySelectorAll('h2,h3')].filter(x=>/panoramica/i.test(x.textContent||''));
+    const target=headings.find(x=>!x.closest('#'+id));
+    if(!target)return;
+    const block=target.closest('section')||target.parentElement;
+    if(block&&block.parentElement)block.insertAdjacentElement('afterend',panel);
+    update();
+  }
+  panel.querySelector('[data-action="refresh"]').addEventListener('click',update);
+  panel.querySelector('[data-action="register"]').addEventListener('click',()=>{
+    const buttons=[...document.querySelectorAll('button')].filter(x=>!panel.contains(x));
+    const btn=buttons.find(x=>/registra (un )?incasso|nuovo movimento/i.test(x.textContent||''));
+    if(btn)btn.click();else document.querySelector('#movementAmount')?.focus();
+  });
+  let tick=0;const observer=new MutationObserver(()=>{if(tick)return;tick=setTimeout(()=>{tick=0;attach();update()},900)});
+  observer.observe(document.body,{childList:true,subtree:true,characterData:true});
+  setInterval(()=>{attach();update()},4500);attach();
+})();
+}
