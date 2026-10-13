@@ -127,7 +127,7 @@ if (location.pathname.includes('vfiscal-app')) {
     const btn=buttons.find(x=>/registra (un )?incasso|nuovo movimento/i.test(x.textContent||''));
     if(btn)btn.click();else document.querySelector('#movementAmount')?.focus();
   });
-  let tick=0;const observer=new MutationObserver(()=>{if(tick)return;tick=setTimeout(()=>{tick=0;attach();update()},900)});
+  let tick=0;const observer=new MutationObserver(changes=>{if(changes.every(m=>panel.contains(m.target)))return;if(tick)return;tick=setTimeout(()=>{tick=0;attach();update()},900)});
   observer.observe(document.body,{childList:true,subtree:true,characterData:true});
   setInterval(()=>{attach();update()},4500);attach();
 })();
