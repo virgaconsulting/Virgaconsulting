@@ -33,6 +33,12 @@ jobs:
           print('Direct 5%/15% rate selections and requirement removal: PASS')
           PY
           curl --fail --silent --show-error --location https://www.virgaconsulting.it/vfiscal-app | grep -q 'vFiscal non verifica automaticamente i requisiti fiscali'
+      - name: Verify visualization module
+        run: |
+          node --input-type=module --check < site-assets/vfiscal-support.js
+          grep -q 'La tua attività, in grafici' site-assets/vfiscal-support.js
+          grep -q 'vf-visual-analytics' dist/site-assets/vfiscal-support.js
+          grep -q 'site-assets/vfiscal-support.js' dist/vfiscal-app.html
       - name: Verify release
         run: |
           test -f dist/release.txt
