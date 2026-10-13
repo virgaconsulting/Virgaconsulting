@@ -985,6 +985,32 @@ for item in sys.argv[1:]:
         p.write_text(html)
 PY
 
+# Expose a read-only authenticated snapshot to the dashboard charts module.
+python3 - "$OUT/vfiscal-app.html" <<'PY'
+from pathlib import Path
+import sys
+p=Path(sys.argv[1]); s=p.read_text()
+needle='let VF_MODEL=vfDefaultModel();'
+bridge="""let VF_MODEL=vfDefaultModel();
+window.vfAnalyticsSnapshot=()=>{
+  if(!window.VFISCAL_MODEL_READY||!window.VFISCAL_AUTH_USER||!VF_MODEL.profile||typeof isPro!=='function'||!isPro())return null;
+  const year=Number(VF_MODEL.selectedYear||2026),y=VF_MODEL.years?.[String(year)];
+  if(!y)return null;
+  const nums=v=>Number.isFinite(Number(v))?Math.max(0,Number(v)):0;
+  const movements=Array.isArray(y.movements)?y.movements:[];
+  const monthly=Array(12).fill(0);
+  for(const m of movements){
+    if(typeof m.date!=='string'||!m.date.startsWith(String(year)+'-'))continue;
+    const mon=Number(m.date.slice(5,7));
+    if(mon>=1&&mon<=12)monthly[mon-1]+=nums(m.amount);
+  }
+  const calc=y.lastCalculated||{};
+  return {ready:true,year,monthly,receipts:nums(y.openingBalance)+movements.reduce((n,m)=>n+nums(m.amount),0),held:nums(y.reserveHeld),tax:calc.tax??null,social:calc.contributions??null};
+};"""
+if s.count(needle)!=1:raise SystemExit('vFiscal model insertion failed')
+p.write_text(s.replace(needle,bridge,1))
+PY
+
 # Final production audit: internal links, critical flows, IDs and JavaScript syntax.
 python3 - "$OUT" <<'PY'
 from pathlib import Path
