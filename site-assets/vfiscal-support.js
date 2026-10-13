@@ -90,30 +90,40 @@ if (location.pathname.includes('vfiscal-app')) {
   function update(){
     if(reading||!panel.isConnected)return;reading=true;
     try {
-      const tax=get('Imposta stimata')??get('Imposta sostitutiva');
-      const social=get('Contributi stimati')??get('Contributi previdenziali');
-      const held=get('Fondo tasse già accantonato');
-      const receipts=get('Incassi 2026')??get('Incassi dell’anno')??get('Incassi anno')??get('Incassi');
-      const total=tax!==null&&social!==null?tax+social:null;
+      const d=window.vfAnalyticsSnapshot?.();
+      if(!d?.ready){panel.hidden=true;return}panel.hidden=false;
+      const tax=d.tax===null?null:Number(d.tax),social=d.social===null?null:Number(d.social);
+      const held=Number(d.held||0),receipts=Number(d.receipts||0),total=tax===null||social===null?null:tax+social;
       put('tax','Imposta: '+(tax===null?'—':euro(tax)));
       put('social','Contributi: '+(social===null?'—':euro(social)));
       put('total',total===null?'—':euro(total));
       const ring=panel.querySelector('.vf-v-ring');
-      if(total!==null&&total>0){const percent=tax/total*100;ring.style.background='conic-gradient(#5869dc 0 '+percent+'%,#40bfa7 '+percent+'% 100%)'}
-      else ring.style.background='#e9edf7';
-      put('held','Già accantonato: '+(held===null?'—':euro(held)));
-      put('remaining','Da accantonare: '+(total===null||held===null?'—':euro(Math.max(0,total-held))));
-      put('reserve',total===null||held===null?'—':Math.round(total>0?held/total*100:100)+'% del fabbisogno');
-      fill('reserve',total!==null&&held!==null?(total>0?held/total*100:100):0);
-      put('receipts',receipts===null?'—':euro(receipts));
-      const cap=85000;
-      put('margin','Margine: '+(receipts===null?'—':euro(Math.max(0,cap-receipts))));
-      fill('threshold',receipts===null?0:receipts/cap*100);
-      put('threshold','Soglia ordinaria: '+euro(cap));
+      if(total!==null&&total>0){const percent=tax/total*100;ring.style.background='conic-gradient(#5869dc 0 '+percent+'%,#40bfa7 '+percent+'% 100%)'}else ring.style.background='#e9edf7';
+      put('held','Già accantonato: '+euro(held));
+      put('remaining','Da accantonare: '+(total===null?'—':euro(Math.max(0,total-held))));
+      put('reserve',total===null?'—':Math.round(total>0?held/total*100:100)+'% del fabbisogno');
+      fill('reserve',total===null?0:total>0?held/total*100:100);
+      put('receipts',euro(receipts));
+      const cap=85000;put('margin','Margine: '+euro(Math.max(0,cap-receipts)));
+      fill('threshold',receipts/cap*100);put('threshold','Soglia ordinaria: '+euro(cap));
+      const months=['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+      const values=Array.isArray(d.monthly)?d.monthly.slice(0,12):[];
+      const box=panel.querySelector('[data-area="monthly"]');
+      if(box&&values.length===12){
+        const max=Math.max(0,...values);
+        const key=String(d.year)+'|'+values.join(',');
+        if(box.dataset.key!==key){
+          box.dataset.key=key;
+          box.innerHTML=max===0?'<div class="vf-v-empty">Nessun movimento datato registrato per questo anno.</div>':
+            '<div style="height:145px;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:5px;align-items:end">'+
+            values.map((v,i)=>'<div style="height:100%;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:5px" title="'+months[i]+': '+euro(v)+'"><div style="width:100%;max-width:24px;height:'+Math.max(2,Math.round(v/max*110))+'px;border-radius:5px 5px 0 0;background:#6578df"></div><small style="font-size:10px;color:#657b94">'+months[i]+'</small></div>').join('')+'</div>';
+        }
+      }
     }finally{reading=false}
   }
   function attach(){
     if(panel.isConnected)return;
+    const host=document.getElementById('mainDashboardContent');if(host){host.insertAdjacentElement('afterbegin',panel);update();return;}
     const headings=[...document.querySelectorAll('h2,h3')].filter(x=>/panoramica/i.test(x.textContent||''));
     const target=headings.find(x=>!x.closest('#'+id));
     if(!target)return;
