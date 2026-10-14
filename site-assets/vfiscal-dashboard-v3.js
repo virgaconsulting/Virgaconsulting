@@ -129,28 +129,56 @@
     put('missing',reserveTarget===null?'—':euro(Math.max(0,reserveTarget-held)));
     progress('fundBar',fundPercent);
     const receipts=number(d.receipts);
-    const threshold=finite(d.threshold)&&Number(d.threshold)>0?Number(d.threshold):85000;
-    const thresholdRatio=threshold>0?receipts/threshold*100:0;
+    const rawThreshold=d.threshold;
+    const threshold=finite(rawThreshold)?Number(rawThreshold):null;
+    const hasLimit=threshold!==null && threshold>0;
+    const thresholdRatio=hasLimit?receipts/threshold*100:0;
     put('receipts',euro(receipts));
-    put('threshold',euro(threshold));
-    put('margin',euro(Math.max(0,threshold-receipts)));
-    put('thresholdPct',percent(thresholdRatio));
+    put('threshold',hasLimit?euro(threshold):'—');
+    put('margin',hasLimit?euro(Math.max(0,threshold-receipts)):'—');
+    put('thresholdPct',hasLimit?percent(thresholdRatio):'—');
     progress('thresholdBar',thresholdRatio);
     const firstYear=String(d.startDate||'').slice(0,4)===String(d.year);
-    const isProrated=firstYear&&threshold<84999.5;
+    const days=Number(d.thresholdDays),yearDays=Number(d.yearDays);
+    const isProrated=hasLimit && firstYear && days>0 && yearDays>0 && days<yearDays;
     const thresholdLabel=field('thresholdLabel');
-    if(thresholdLabel){thresholdLabel.firstChild.textContent=isProrated?'Limite ragguagliato: ':'Soglia annua: '}
+    if(thresholdLabel){
+      const label=!hasLimit?'Limite non disponibile: ':isProrated?'Limite '+d.year+' ragguagliato: ':'Soglia annua '+d.year+': ';
+      thresholdLabel.firstChild.textContent=label;
+    }
     const note=field('thresholdNote');
     if(note){
-      note.hidden=!isProrated;
-      if(isProrated){
-        const month=Number(String(d.startDate).slice(5,7))-1;
-        const label=fullMonths[month]||'quest’anno';
-        note.textContent='P.IVA aperta a '+label+' '+d.year+': limite di 85.000 € ragguagliato al periodo di attività.';
+      if(d.missingStartDate || !hasLimit){
+        note.hidden=false;
+        note.textContent=d.missingStartDate
+          ? 'Inserisci una data di apertura valida nel Profilo fiscale per calcolare il limite applicabile.'
+          : 'Limite non disponibile per questo anno: controlla la data di apertura nel Profilo fiscale.';
+      }else if(isProrated){
+        const parts=String(d.startDate).split('-');
+        const pretty=parts.length===3?parts[2]+'/'+parts[1]+'/'+parts[0]:String(d.startDate);
+        const formula='85.000 € × '+days+' giorni / '+yearDays+' giorni';
+        let message='P.IVA aperta il '+pretty+'. Periodo: '+pretty+' – 31/12/'+d.year+' ('+days+' giorni). Limite: '+formula+'.';
+        if(receipts>100000){
+          message+=' Superati 100.000 €: è prevista la fuoriuscita immediata dal regime.';
+        }else if(receipts>threshold){
+          message+=' Attenzione: superato il limite ragguagliato, da verificare la permanenza nel regime nell’anno successivo.';
+        }else{
+          message+=' La soglia di uscita immediata di 100.000 € non è ragguagliata.';
+        }
+        note.hidden=false;note.textContent=message;
+      }else if(receipts>100000){
+        note.hidden=false;
+        note.textContent='Superati 100.000 €: è prevista la fuoriuscita immediata dal regime forfettario.';
+      }else if(receipts>threshold){
+        note.hidden=false;
+        note.textContent='Superato il limite ordinario: verifica la permanenza nel regime per l’anno successivo.';
+      }else{
+        note.hidden=true;
+        note.textContent='';
       }
     }
     const thresholdProgress=field('thresholdBar')?.parentElement;
-    if(thresholdProgress)thresholdProgress.classList.toggle('warning',thresholdRatio>=100);
+    if(thresholdProgress)thresholdProgress.classList.toggle('warning',hasLimit&&thresholdRatio>=100);
     put('year',d.year);
     put('taxKpi',euro(tax));
     put('socialKpi',euro(social));
