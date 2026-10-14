@@ -985,6 +985,25 @@ for item in sys.argv[1:]:
         p.write_text(html)
 PY
 
+# Redesigned vFiscal overview (existing data logic and other views remain unchanged).
+cp site-assets/vfiscal-dashboard-v3.css "$OUT/site-assets/vfiscal-dashboard-v3.css"
+cp site-assets/vfiscal-dashboard-v3.js "$OUT/site-assets/vfiscal-dashboard-v3.js"
+python3 - "$OUT/vfiscal-app.html" <<'PY'
+from pathlib import Path
+import sys
+p=Path(sys.argv[1])
+html=p.read_text()
+style='<link rel="stylesheet" href="/site-assets/vfiscal-dashboard-v3.css">'
+script='<script defer src="/site-assets/vfiscal-dashboard-v3.js"></script>'
+if style not in html:
+    if '</head>' not in html:raise SystemExit('Dashboard head closing tag missing')
+    html=html.replace('</head>',style+'\n</head>',1)
+if script not in html:
+    if '</body>' not in html:raise SystemExit('Dashboard body closing tag missing')
+    html=html.replace('</body>',script+'\n</body>',1)
+p.write_text(html)
+PY
+
 # Expose a read-only authenticated snapshot to the dashboard charts module.
 python3 - "$OUT/vfiscal-app.html" <<'PY'
 from pathlib import Path
