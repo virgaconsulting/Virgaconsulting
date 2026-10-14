@@ -1077,7 +1077,7 @@ from pathlib import Path
 import sys
 for name in sys.argv[1:]:
     p=Path(name); html=p.read_text()
-    link='<a href="/vfiscal-admin" class="vf-studio-access" aria-label="Accesso amministratore vFiscal">Accesso Studio</a>'
+    link='<a href="/vfiscal-admin.html" class="vf-studio-access" aria-label="Accesso amministratore vFiscal">Accesso Studio</a>'
     if 'class="vf-studio-access"' in html: continue
     pos=html.rfind('</footer>')
     if pos<0:raise SystemExit(f'{name}: no page footer found')
