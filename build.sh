@@ -338,34 +338,7 @@ s=s.replace(
 )
 
 old="""async function act(action){try{const email=$('clientEmail').value.trim();if(!email)throw new Error('Inserisci l’email del cliente.');setMsg('msg','Aggiornamento…');await call({action,email});setMsg('msg',action==='grant'?'Accesso incluso attivato.':'Accesso incluso revocato.');await load()}catch(e){setMsg('msg',e.message,true)}}"""
-new="""async function act(action){
-  try{
-    const email=$('clientEmail').value.trim();
-    if(!email)throw new Error('Inserisci l’email del cliente.');
-    setMsg('msg',action==='create'?'Invio invito in corso…':'Aggiornamento…');
-    const out=await call({action,email});
-    if(action==='create'){
-      const box=$('createdClientResult'),emailEl=$('createdClientEmail');
-      const existingNote=$('existingClientNote');
-      if(emailEl)emailEl.textContent=email;
-      if(box)box.classList.add('show');
-      if(out.invited){
-        if(existingNote)existingNote.style.display='none';
-        setMsg('msg','Invito inviato a '+email+'. Il cliente potrà scegliere la propria password dal link ricevuto.');
-      }else if(out.existing){
-        if(existingNote)existingNote.style.display='block';
-        setMsg('msg','Account già esistente: accesso incluso attivato. Usa le credenziali già in possesso del cliente.');
-      }else{
-        setMsg('msg','Operazione completata.');
-      }
-    }else{
-      setMsg('msg',action==='grant'?'Accesso incluso attivato.':'Accesso incluso revocato.');
-    }
-    await load();
-  }catch(e){
-    setMsg('msg',e.message,true);
-  }
-}"""
+new="""async function act(action){try{const email=$('clientEmail').value.trim();if(!email)throw new Error('Inserisci l’email del cliente.');setMsg('msg',action==='create'?'Creazione account…':'Aggiornamento…');const out=await call({action,email});if(action==='create'){if(out.temporary_password){setMsg('msg','Account cliente creato e vFiscal incluso. Password temporanea: '+out.temporary_password+' — comunicala solo al cliente.');}else{setMsg('msg','Account già esistente: accesso Virga Consulting incluso attivato.');}}else{setMsg('msg',action==='grant'?'Accesso incluso attivato.':'Accesso incluso revocato.');}await load()}catch(e){setMsg('msg',e.message,true)}}"""
 if old not in s:
     raise SystemExit("admin act function not found")
 s=s.replace(old,new,1)
