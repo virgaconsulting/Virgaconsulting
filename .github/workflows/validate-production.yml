@@ -33,6 +33,8 @@ jobs:
           print('Direct 5%/15% rate selections and requirement removal: PASS')
           PY
           curl --fail --silent --show-error --location https://www.virgaconsulting.it/vfiscal-app | grep -q 'vFiscal non verifica automaticamente i requisiti fiscali'
+      - name: Check first-year threshold calculations
+        run: node scripts/test_vfiscal_threshold.cjs
       - name: Verify redesigned dashboard and fiscal data
         run: |
           node --check site-assets/vfiscal-dashboard-v3.js
