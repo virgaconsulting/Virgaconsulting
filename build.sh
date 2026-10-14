@@ -1005,7 +1005,19 @@ window.vfAnalyticsSnapshot=()=>{
     if(mon>=1&&mon<=12)monthly[mon-1]+=nums(m.amount);
   }
   const calc=y.lastCalculated||{};
-  return {ready:true,year,monthly,receipts:nums(y.openingBalance)+movements.reduce((n,m)=>n+nums(m.amount),0),held:nums(y.reserveHeld),tax:calc.tax??null,social:calc.contributions??null};
+  const thresholdData=typeof vfThresholdForYear==='function'?vfThresholdForYear(year):null;
+  const threshold=Number(thresholdData?.threshold);
+  const validThreshold=Number.isFinite(threshold)&&threshold>0?threshold:85000;
+  const currentReceipts=nums(y.openingBalance)+movements.reduce((n,m)=>n+nums(m.amount),0);
+  return {
+    ready:true,year,monthly,receipts:currentReceipts,openingBalance:nums(y.openingBalance),
+    movementsCount:movements.length,
+    held:nums(y.reserveHeld),tax:calc.tax??null,social:calc.contributions??null,
+    reserveTarget:calc.reserveNeed??calc.matured??null,
+    threshold:validThreshold,thresholdDays:thresholdData?.days??null,
+    startDate:VF_MODEL.profile.startDate||null,
+    socialScheme:VF_MODEL.profile.socialScheme||null
+  };
 };"""
 if s.count(needle)!=1:raise SystemExit('vFiscal model insertion failed')
 p.write_text(s.replace(needle,bridge,1))
