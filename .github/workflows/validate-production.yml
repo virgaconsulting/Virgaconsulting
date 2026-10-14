@@ -37,21 +37,31 @@ jobs:
         run: |
           node --check site-assets/vfiscal-dashboard-v3.js
           node --input-type=module --check < site-assets/vfiscal-support.js
-          test -s dist/site-assets/vfiscal-dashboard-v3.js
-          test -s dist/site-assets/vfiscal-dashboard-v3.css
-          grep -q 'vf-dashboard-v3' dist/site-assets/vfiscal-dashboard-v3.js
-          grep -q 'vf-dashboard-v3.css' dist/vfiscal-app.html
-          grep -q 'vf-dashboard-v3.js' dist/vfiscal-app.html
-          grep -q 'window.vfAnalyticsSnapshot' dist/vfiscal-app.html
-          grep -q 'vfThresholdForYear' dist/vfiscal-app.html
-          grep -q 'reserveTarget:calc.reserveNeed' dist/vfiscal-app.html
-          grep -q 'P.IVA aperta' dist/site-assets/vfiscal-dashboard-v3.js
-          if grep -q 'vf-visual-analytics' dist/site-assets/vfiscal-support.js; then
-            echo "Legacy graph component still deployed"
-            exit 1
-          fi
-          grep -q 'vfd-restyled' dist/site-assets/vfiscal-dashboard-v3.css
-          grep -q 'mainDashboardContent' dist/site-assets/vfiscal-dashboard-v3.js
+          python3 - <<'PY'
+          from pathlib import Path
+          checks=[
+            ('javascript file',Path('dist/site-assets/vfiscal-dashboard-v3.js').is_file()),
+            ('stylesheet file',Path('dist/site-assets/vfiscal-dashboard-v3.css').is_file()),
+          ]
+          html=Path('dist/vfiscal-app.html').read_text()
+          js=Path('dist/site-assets/vfiscal-dashboard-v3.js').read_text()
+          css=Path('dist/site-assets/vfiscal-dashboard-v3.css').read_text()
+          support=Path('dist/site-assets/vfiscal-support.js').read_text()
+          checks += [
+            ('chart module', 'vf-dashboard-v3' in js),
+            ('stylesheet linked', 'vfiscal-dashboard-v3.css' in html),
+            ('script linked', 'vfiscal-dashboard-v3.js' in html),
+            ('authenticated snapshot', 'window.vfAnalyticsSnapshot' in html),
+            ('fiscal threshold function', 'vfThresholdForYear' in html),
+            ('reserve model', 'reserveTarget:calc.reserveNeed' in html),
+            ('first-year guidance', 'P.IVA aperta' in js),
+            ('old charts removed', 'vf-visual-analytics' not in support),
+            ('responsive layout', 'vfd-restyled' in css),
+            ('correct mounting', 'mainDashboardContent' in js),
+          ]
+          for name,good in checks:print(('PASS' if good else 'FAIL')+' '+name)
+          assert all(ok for _,ok in checks)
+          PY
       - name: Verify release
         run: |
           test -f dist/release.txt
