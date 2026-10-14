@@ -125,7 +125,7 @@ jobs:
         run: |
           app="$(curl --fail --silent --show-error --location https://www.virgaconsulting.it/vfiscal-app)"
           grep -q "vfiscal-register-paid" <<< "$app"
-          if grep -q "auth.signUp(" <<< "$app"; then <<< "$app"
+          if grep -q "auth.signUp(" <<< "$app"; then
             echo "Direct public Supabase sign-up is still exposed"
             exit 1
           fi
@@ -149,7 +149,7 @@ jobs:
             -H "apikey: sb_publishable_YqARTOD7oZD5Rg2vu6salQ_jGoGhHzY" \
             --data '{"email":"qa-vfiscal@example.com","password":"Testing123!","session_id":"cs_fake_no_payment"}')"
           test "$status" = "403"
-          grep -q "acquisto vFiscal completato" /tmp/free-register.json <<< "$app"
+          grep -q "acquisto vFiscal completato" /tmp/free-register.json
 
       - name: Verify auth, cache and purchase API
         run: |
