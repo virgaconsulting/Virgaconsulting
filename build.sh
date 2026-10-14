@@ -1071,6 +1071,20 @@ if s.count(needle)!=1:raise SystemExit('vFiscal model insertion failed')
 p.write_text(s.replace(needle,bridge,1))
 PY
 
+# Keep a permanent and discreet link to the existing protected admin login.
+python3 - "$OUT/index.html" "$OUT/vfiscal.html" <<'PY'
+from pathlib import Path
+import sys
+for name in sys.argv[1:]:
+    p=Path(name); html=p.read_text()
+    link='<a href="/vfiscal-admin" class="vf-studio-access" aria-label="Accesso amministratore vFiscal">Accesso Studio</a>'
+    if 'class="vf-studio-access"' in html: continue
+    pos=html.rfind('</footer>')
+    if pos<0:raise SystemExit(f'{name}: no page footer found')
+    html=html[:pos]+('<div style="text-align:center;margin:12px auto 6px;font-size:12px;opacity:.8">'+link+'</div>')+html[pos:]
+    p.write_text(html)
+PY
+
 # Final production audit: internal links, critical flows, IDs and JavaScript syntax.
 python3 - "$OUT" <<'PY'
 from pathlib import Path
