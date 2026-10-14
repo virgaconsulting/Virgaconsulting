@@ -432,43 +432,27 @@ new="""async function act(action){
   try{
     const email=$('clientEmail').value.trim();
     if(!email)throw new Error('Inserisci l’email del cliente.');
-    setMsg('msg',action==='create'?'Creazione cliente…':'Aggiornamento…');
+    setMsg('msg',action==='create'?'Invio invito in corso…':'Aggiornamento…');
     const out=await call({action,email});
-
     if(action==='create'){
-      const box=$('createdClientResult'),emailEl=$('createdClientEmail'),passEl=$('createdClientPassword');
-      const passLine=$('createdPasswordLine'),existingNote=$('existingClientNote');
+      const box=$('createdClientResult'),emailEl=$('createdClientEmail');
+      const note=$('existingClientNote');
       if(emailEl)emailEl.textContent=email;
       if(box)box.classList.add('show');
-
-      if(out.temporary_password){
-        if(passEl)passEl.textContent=out.temporary_password;
-        if(passLine)passLine.style.display='grid';
-        if(existingNote)existingNote.style.display='none';
-        setMsg('msg','Cliente creato. Copia la password temporanea e comunicala al cliente.');
+      if(out.invited){
+        if(note)note.style.display='none';
+        setMsg('msg','Invito inviato a '+email+'. Il cliente sceglierà la propria password dal link ricevuto.');
+      }else if(out.existing){
+        if(note)note.style.display='block';
+        setMsg('msg','Account già esistente: accesso incluso attivato. Usa le credenziali già in possesso del cliente.');
       }else{
-        if(passEl)passEl.textContent='—';
-        if(passLine)passLine.style.display='none';
-        if(existingNote)existingNote.style.display='block';
-        setMsg('msg','Account già esistente: accesso incluso attivato.');
+        setMsg('msg','Operazione completata.');
       }
     }else{
       setMsg('msg',action==='grant'?'Accesso incluso attivato.':'Accesso incluso revocato.');
     }
     await load();
-  }catch(e){
-    setMsg('msg',e.message,true);
-  }
-}
-async function copyTempPassword(){
-  const value=$('createdClientPassword')?.textContent?.trim();
-  if(!value||value==='—')return;
-  try{
-    await navigator.clipboard.writeText(value);
-    setMsg('msg','Password temporanea copiata.');
-  }catch{
-    setMsg('msg','Seleziona e copia manualmente la password mostrata.',true);
-  }
+  }catch(e){setMsg('msg',e.message,true)}
 }"""
 if old not in s:
     raise SystemExit("simple admin act function not found")
