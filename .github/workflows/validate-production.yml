@@ -35,6 +35,19 @@ jobs:
           curl --fail --silent --show-error --location https://www.virgaconsulting.it/vfiscal-app | grep -q 'vFiscal non verifica automaticamente i requisiti fiscali'
       - name: Check first-year threshold calculations
         run: node scripts/test_vfiscal_threshold.cjs
+      - name: Verify administrator and client account tools
+        run: |
+          node --check site-assets/vfiscal-account-tools.js
+          node --check site-assets/vfiscal-financial-sync.js
+          test -s dist/site-assets/vfiscal-account-tools.js
+          test -s dist/site-assets/vfiscal-financial-sync.js
+          grep -q 'vfiscal-account-tools.js' dist/vfiscal-admin.html
+          grep -q 'vfiscal-account-tools.js' dist/vfiscal-app.html
+          grep -q 'vfiscal-financial-sync.js' dist/vfiscal-app.html
+          grep -q 'Copia credenziali' dist/vfiscal-admin.html
+          grep -q 'Password provvisoria' dist/vfiscal-admin.html
+          grep -q 'Cambia password' dist/site-assets/vfiscal-account-tools.js
+          grep -q 'Elimina account selezionato' dist/site-assets/vfiscal-account-tools.js
       - name: Verify redesigned dashboard and fiscal data
         run: |
           node --check site-assets/vfiscal-dashboard-v3.js
@@ -111,23 +124,23 @@ jobs:
       - name: Verify paid-only registration
         run: |
           app="$(curl --fail --silent --show-error --location https://www.virgaconsulting.it/vfiscal-app)"
-          echo "$app" | grep -q "vfiscal-register-paid"
-          if echo "$app" | grep -q "auth.signUp("; then
+          grep -q "vfiscal-register-paid" <<< "$app"
+          if grep -q "auth.signUp(" <<< "$app"; then <<< "$app"
             echo "Direct public Supabase sign-up is still exposed"
             exit 1
           fi
-          echo "$app" | grep -q 'id="vfRegisterModeBtn"'
-          echo "$app" | grep -q 'style="display:none"'
+          grep -q 'id="vfRegisterModeBtn"' <<< "$app"
+          grep -q 'style="display:none"' <<< "$app"
 
           admin="$(curl --fail --silent --show-error --location https://www.virgaconsulting.it/vfiscal-admin)"
-          echo "$admin" | grep -q "Crea cliente"
-          echo "$admin" | grep -q "Copia password"
-          echo "$admin" | grep -q "Gestione accesso esistente"
-          echo "$admin" | grep -q "Torna al sito"
-          echo "$admin" | grep -q "Apri vFiscal"
+          grep -q "Crea cliente" <<< "$admin"
+          grep -q "Copia credenziali" <<< "$admin"
+          grep -q "Gestione accesso esistente" <<< "$admin"
+          grep -q "Torna al sito" <<< "$admin"
+          grep -q "Apri vFiscal" <<< "$admin"
 
           app="$(curl --fail --silent --show-error --location https://www.virgaconsulting.it/vfiscal-app)"
-          echo "$app" | grep -q "Gestione clienti"
+          grep -q "Gestione clienti" <<< "$app"
 
           status="$(curl --silent --show-error --output /tmp/free-register.json --write-out "%{http_code}" \
             -X POST "https://kytgwujzjahatblrkhgh.supabase.co/functions/v1/vfiscal-register-paid" \
@@ -136,7 +149,7 @@ jobs:
             -H "apikey: sb_publishable_YqARTOD7oZD5Rg2vu6salQ_jGoGhHzY" \
             --data '{"email":"qa-vfiscal@example.com","password":"Testing123!","session_id":"cs_fake_no_payment"}')"
           test "$status" = "403"
-          grep -q "acquisto vFiscal completato" /tmp/free-register.json
+          grep -q "acquisto vFiscal completato" /tmp/free-register.json <<< "$app"
 
       - name: Verify auth, cache and purchase API
         run: |
