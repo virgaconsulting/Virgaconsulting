@@ -1004,6 +1004,34 @@ if script not in html:
 p.write_text(html)
 PY
 
+# Keep the ordinary forfettario ceiling aligned to actual activity days.
+# Uses the full tax year's day count (365 or 366), inclusively from the start date.
+python3 - "$OUT/vfiscal-app.html" <<'PY'
+from pathlib import Path
+import re,sys
+p=Path(sys.argv[1]);s=p.read_text()
+new_function="""function vfThresholdForYear(year){
+  const yearNum=Number(year);
+  const daysInYear=Number.isInteger(yearNum)&&(yearNum>=2000)
+    ? (Date.UTC(yearNum+1,0,1)-Date.UTC(yearNum,0,1))/86400000 : 365;
+  const rawDate=VF_MODEL.profile?.startDate||'';
+  const hasValidDate=typeof vfIsValidISODate==='function'&&vfIsValidISODate(rawDate);
+  if(!hasValidDate) return {days:null,threshold:null,yearDays:daysInYear,missingDate:true};
+  const openYear=Number(rawDate.slice(0,4));
+  if(yearNum>openYear) return {days:daysInYear,threshold:85000,yearDays:daysInYear,openingDate:rawDate};
+  if(yearNum<openYear) return {days:0,threshold:0,yearDays:daysInYear,openingDate:rawDate};
+  const start=Date.parse(rawDate+'T00:00:00Z');
+  const yearEnd=Date.UTC(yearNum+1,0,1);
+  const days=Math.max(0,Math.min(daysInYear,Math.round((yearEnd-start)/86400000)));
+  const threshold=Math.round(85000*days/daysInYear*100)/100;
+  return {days,threshold,yearDays:daysInYear,openingDate:rawDate};
+}"""
+pattern=r'(?m)^function vfThresholdForYear\(year\)\{.*?^\}'
+s,n=re.subn(pattern,lambda m:new_function,s,count=1,flags=re.S|re.M)
+if n!=1:raise SystemExit('Threshold function replacement failed: expected exactly one function')
+p.write_text(s)
+PY
+
 # Expose a read-only authenticated snapshot to the dashboard charts module.
 python3 - "$OUT/vfiscal-app.html" <<'PY'
 from pathlib import Path
@@ -1025,8 +1053,8 @@ window.vfAnalyticsSnapshot=()=>{
   }
   const calc=y.lastCalculated||{};
   const thresholdData=typeof vfThresholdForYear==='function'?vfThresholdForYear(year):null;
-  const threshold=Number(thresholdData?.threshold);
-  const validThreshold=Number.isFinite(threshold)&&threshold>0?threshold:85000;
+  const threshold=thresholdData?.threshold;
+  const validThreshold=threshold===null||threshold===undefined?null:(Number.isFinite(Number(threshold))?Number(threshold):null);
   const currentReceipts=nums(y.openingBalance)+movements.reduce((n,m)=>n+nums(m.amount),0);
   return {
     ready:true,year,monthly,receipts:currentReceipts,openingBalance:nums(y.openingBalance),
@@ -1034,6 +1062,7 @@ window.vfAnalyticsSnapshot=()=>{
     held:nums(y.reserveHeld),tax:calc.tax??null,social:calc.contributions??null,
     reserveTarget:calc.matured??null,
     threshold:validThreshold,thresholdDays:thresholdData?.days??null,
+    yearDays:thresholdData?.yearDays??null,missingStartDate:!!thresholdData?.missingDate,
     startDate:VF_MODEL.profile.startDate||null,
     socialScheme:VF_MODEL.profile.socialScheme||null
   };
