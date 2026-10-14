@@ -53,7 +53,7 @@ jobs:
             ('script linked', 'vfiscal-dashboard-v3.js' in html),
             ('authenticated snapshot', 'window.vfAnalyticsSnapshot' in html),
             ('fiscal threshold function', 'vfThresholdForYear' in html),
-            ('reserve model', 'reserveTarget:calc.reserveNeed' in html),
+            ('reserve model', 'reserveTarget:calc.matured' in html),
             ('first-year guidance', 'P.IVA aperta' in js),
             ('old charts removed', 'vf-visual-analytics' not in support),
             ('responsive layout', 'vfd-restyled' in css),
