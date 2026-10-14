@@ -84,6 +84,22 @@ jobs:
           done
           echo "Production did not reach $expected in time"
           exit 1
+      - name: Verify redesigned dashboard on production
+        run: |
+          set -e
+          for i in $(seq 1 30); do
+            curl --fail --silent --show-error --location --max-time 10 https://www.virgaconsulting.it/site-assets/vfiscal-dashboard-v3.js > /tmp/vfd-live.js || true
+            curl --fail --silent --show-error --location --max-time 10 https://www.virgaconsulting.it/site-assets/vfiscal-dashboard-v3.css > /tmp/vfd-live.css || true
+            curl --fail --silent --show-error --location --max-time 10 https://www.virgaconsulting.it/vfiscal-app > /tmp/vfd-live.html || true
+            if grep -q 'vf-dashboard-v3' /tmp/vfd-live.js && grep -q 'vfd-restyled' /tmp/vfd-live.css && grep -q 'vfiscal-dashboard-v3.js' /tmp/vfd-live.html; then
+              echo 'Redesigned dashboard is published on the live site.'
+              exit 0
+            fi
+            echo "Waiting for live dashboard assets ($i/30)"
+            sleep 10
+          done
+          echo 'Latest dashboard assets are not live'
+          exit 1
       - name: Smoke test public vFiscal
         run: |
           curl --fail --silent --show-error --location https://www.virgaconsulting.it/vfiscal-app | grep -q "Area personale"
