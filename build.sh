@@ -1064,6 +1064,77 @@ for name in sys.argv[1:]:
     p.write_text(html)
 PY
 
+# Studio finance tools, protected deletion, temporary credentials and customer password change.
+mkdir -p "$OUT/site-assets"
+cp site-assets/vfiscal-account-tools.js "$OUT/site-assets/vfiscal-account-tools.js"
+cp site-assets/vfiscal-financial-sync.js "$OUT/site-assets/vfiscal-financial-sync.js"
+python3 - "$OUT/vfiscal-admin.html" "$OUT/vfiscal-app.html" <<'PY'
+from pathlib import Path
+import sys,re
+admin=Path(sys.argv[1]);app=Path(sys.argv[2])
+s=admin.read_text()
+s=s.replace(
+    'Inserisci l’email del cliente. Riceverà un invito per attivare gratuitamente vFiscal e scegliere personalmente la password.',
+    'Inserisci l’email del cliente. Verrà generata una password temporanea da comunicargli in modo riservato; potrà cambiarla dal suo account.'
+)
+s=s.replace(
+    'Invia un invito email al cliente: potrà scegliere da solo la password e accedere a vFiscal senza pagare.',
+    'Crea un account incluso gratuitamente, copia le credenziali e consegnale al cliente in modo riservato.'
+)
+s=s.replace('✓ Invito pronto','✓ Cliente creato')
+markup='<div id="createdPasswordLine" class="credential-line"><span class="credential-label">Password provvisoria</span><span id="createdClientPassword" class="credential-value">—</span><button type="button" class="copy-btn" onclick="copyTempPassword()">Copia credenziali</button></div>'
+needle='<div id="existingClientNote"'
+if s.count(needle)!=1:raise SystemExit('Password field insertion anchor missing')
+s=s.replace(needle,markup+'\\n          '+needle,1)
+act=r"""async function act(action){
+  try{
+    const email=$('clientEmail').value.trim();
+    if(!email)throw new Error('Inserisci l’email del cliente.');
+    setMsg('msg',action==='create'?'Creazione cliente…':'Aggiornamento…');
+    const out=await call({action,email});
+    if(action==='create'){
+      const result=$('createdClientResult'),emailEl=$('createdClientEmail'),passEl=$('createdClientPassword');
+      const line=$('createdPasswordLine'),note=$('existingClientNote');
+      if(emailEl)emailEl.textContent=email;
+      if(result)result.classList.add('show');
+      if(out.temporary_password){
+        if(passEl)passEl.textContent=out.temporary_password;
+        if(line)line.style.display='grid';
+        if(note)note.style.display='none';
+        setMsg('msg','Account creato. Copia le credenziali e comunicale al cliente con un canale riservato.');
+      }else if(out.existing){
+        if(line)line.style.display='none';
+        if(note)note.style.display='block';
+        setMsg('msg','Account già esistente: accesso gratuito attivato. Le vecchie credenziali restano valide.');
+      }else{
+        if(line)line.style.display='none';
+        setMsg('msg','Operazione completata.');
+      }
+    }else{
+      setMsg('msg',action==='grant'?'Accesso incluso attivato.':'Accesso incluso revocato.');
+    }
+    await load();
+  }catch(e){setMsg('msg',e.message,true)}
+}
+async function copyTempPassword(){
+  const email=$('createdClientEmail')?.textContent?.trim();
+  const password=$('createdClientPassword')?.textContent?.trim();
+  if(!email||!password||password==='—')return;
+  const credentials='vFiscal · Accesso cliente\\nSito: https://www.virgaconsulting.it/vfiscal-app.html\\nEmail: '+email+'\\nPassword temporanea: '+password+'\\nAl primo accesso puoi modificare la password dall’area personale.';
+  try{await navigator.clipboard.writeText(credentials);setMsg('msg','Credenziali copiate. Condividile soltanto con il cliente.');}
+  catch{setMsg('msg','Seleziona e copia manualmente le credenziali.',true)}
+}"""
+s,n=re.subn(r'async function act\\(action\\)\\{.*?\\n\\}',lambda _:act,s,count=1,flags=re.S)
+if n!=1:raise SystemExit('Cannot safely replace admin create function')
+script='<script type="module" src="/site-assets/vfiscal-account-tools.js"></script>'
+if script not in s:s=s.replace('</body>',script+'\\n</body>',1)
+admin.write_text(s)
+v=app.read_text()
+for tag in ['<script type="module" src="/site-assets/vfiscal-account-tools.js"></script>','<script type="module" src="/site-assets/vfiscal-financial-sync.js"></script>']:
+    if tag not in v:v=v.replace('</body>',tag+'\\n</body>',1)
+app.write_text(v)
+PY
+
 # Final production audit: internal links, critical flows, IDs and JavaScript syntax.
 python3 - "$OUT" <<'PY'
 from pathlib import Path
