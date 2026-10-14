@@ -1124,7 +1124,7 @@ async function copyTempPassword(){
   try{await navigator.clipboard.writeText(credentials);setMsg('msg','Credenziali copiate. Condividile soltanto con il cliente.');}
   catch{setMsg('msg','Seleziona e copia manualmente le credenziali.',true)}
 }"""
-s,n=re.subn(r'async function act\\(action\\)\\{.*?\\n\\}',lambda _:act,s,count=1,flags=re.S)
+s,n=re.subn(r'async function act\(action\)\{.*?\n\}',lambda _:act,s,count=1,flags=re.S)
 if n!=1:raise SystemExit('Cannot safely replace admin create function')
 script='<script type="module" src="/site-assets/vfiscal-account-tools.js"></script>'
 if script not in s:s=s.replace('</body>',script+'\\n</body>',1)
