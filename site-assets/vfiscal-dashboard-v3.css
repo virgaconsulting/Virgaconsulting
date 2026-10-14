@@ -1,0 +1,93 @@
+
+/* vFiscal dashboard v3 — preserve underlying dashboard logic, restyle overview only. */
+#dashboardPro.vfd-restyled .vf-sidebar{background:linear-gradient(165deg,#084585 0%,#073873 54%,#06336c 100%);color:#fff}
+#dashboardPro.vfd-restyled .vf-side-nav button.active{background:#fff;color:#1260d2;box-shadow:0 4px 16px rgba(3,35,83,.15)}
+#dashboardPro.vfd-restyled .vf-main{background:#f5f8fc}
+#dashboardPro.vfd-restyled .vf-page-title{margin-bottom:20px}
+#dashboardPro.vfd-restyled .vf-page-title h2{color:#101f49;font-weight:800;letter-spacing:-.035em}
+#dashboardPro.vfd-restyled .vf-context-pill,#dashboardPro.vfd-restyled #vfQuickStrip{display:none!important}
+#dashboardPro.vfd-restyled #mainDashboardContent > :not(#vf-dashboard-v3){display:none!important}
+#dashboardPro .vfd-register{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:10px;color:#fff;background:#0861e8;padding:12px 16px;font:700 13px Inter,system-ui,sans-serif;cursor:pointer;box-shadow:0 3px 10px rgba(4,75,178,.17);white-space:nowrap}
+#dashboardPro .vfd-register:hover{background:#0054ce}
+#dashboardPro #vf-dashboard-v3{color:#142346;font-family:Inter,system-ui,sans-serif;max-width:100%;margin:0 auto 28px}
+#vf-dashboard-v3[hidden]{display:none!important}
+#vf-dashboard-v3 *{box-sizing:border-box}
+#vf-dashboard-v3 .vfd-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+#vf-dashboard-v3 .vfd-card{min-width:0;background:#fff;border:1px solid #e5ebf3;box-shadow:0 5px 22px rgba(27,50,85,.045);border-radius:14px;padding:23px;overflow:hidden}
+#vf-dashboard-v3 .vfd-card-head{margin-bottom:16px}
+#vf-dashboard-v3 h3{color:#15234c;font-size:19px;font-weight:800;letter-spacing:-.02em;line-height:1.2;margin:0 0 6px}
+#vf-dashboard-v3 .vfd-sub{margin:0;color:#607497;font-size:13px;line-height:1.5}
+#vf-dashboard-v3 .vfd-donut-row{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:190px}
+#vf-dashboard-v3 .vfd-donut{width:190px;height:190px;flex:0 0 190px;border-radius:50%;display:grid;place-items:center;background:#edf2f8;transition:background .2s}
+#vf-dashboard-v3 .vfd-donut-hole{height:138px;width:138px;border-radius:50%;background:white;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;padding:8px;text-align:center}
+#vf-dashboard-v3 .vfd-donut-hole strong{font-size:25px;font-weight:850;letter-spacing:-.04em;color:#15234c;white-space:nowrap}
+#vf-dashboard-v3 .vfd-donut-hole span{color:#7183a1;font-size:12px}
+#vf-dashboard-v3 .vfd-legend{display:grid;gap:25px;min-width:135px;flex:1}
+#vf-dashboard-v3 .vfd-legend-row{display:grid;grid-template-columns:13px 1fr;gap:10px;align-items:start}
+#vf-dashboard-v3 .vfd-dot{height:12px;width:12px;margin-top:4px;border-radius:50%;display:inline-block}
+#vf-dashboard-v3 .vfd-tax-dot{background:#1268ef}
+#vf-dashboard-v3 .vfd-social-dot{background:#23bf7c}
+#vf-dashboard-v3 .vfd-legend-row b{display:block;color:#182850;font-size:14px;margin-bottom:5px}
+#vf-dashboard-v3 .vfd-legend-amount{display:block;color:#526789;font-size:13px;line-height:1.4;font-variant-numeric:tabular-nums}
+#vf-dashboard-v3 .vfd-legend-amount.tax{color:#1769dc;font-weight:700}
+#vf-dashboard-v3 .vfd-legend-amount.social{color:#15895c;font-weight:700}
+#vf-dashboard-v3 .vfd-big{font-size:38px;font-weight:850;letter-spacing:-.045em;color:#132b61;line-height:1.12;font-variant-numeric:tabular-nums;margin:18px 0 3px}
+#vf-dashboard-v3 .vfd-big-note{font-size:15px;color:#1e3157;font-weight:700;margin-bottom:22px}
+#vf-dashboard-v3 .vfd-progress{height:16px;background:#e7edf5;border-radius:20px;overflow:hidden;margin:15px 0 10px}
+#vf-dashboard-v3 .vfd-progress > div{height:100%;border-radius:inherit;background:linear-gradient(90deg,#0870f4,#377ff4);transition:width .25s ease;width:0}
+#vf-dashboard-v3 .vfd-progress.green > div{background:linear-gradient(90deg,#20b878,#4ed19c)}
+#vf-dashboard-v3 .vfd-progress.warning > div{background:linear-gradient(90deg,#dc8453,#e7b35c)}
+#vf-dashboard-v3 .vfd-progress-labels{display:flex;justify-content:space-between;gap:12px;color:#536c92;font-size:12px}
+#vf-dashboard-v3 .vfd-progress-copy{display:flex;justify-content:space-between;gap:12px;color:#51678c;font-size:13px;margin-top:18px;flex-wrap:wrap}
+#vf-dashboard-v3 .vfd-progress-copy strong{color:#1a2c56;font-weight:750;font-variant-numeric:tabular-nums}
+#vf-dashboard-v3 .vfd-note{margin:16px 0 0;border-radius:8px;background:#f1f6ff;padding:9px 11px;font-size:11px;line-height:1.5;color:#466895}
+#vf-dashboard-v3 .vfd-card-threshold .vfd-big{margin-top:25px}
+#vf-dashboard-v3 .vfd-threshold-flex{display:flex;align-items:center;gap:15px;margin-top:15px}
+#vf-dashboard-v3 .vfd-threshold-flex .vfd-progress{flex:1;margin:0}
+#vf-dashboard-v3 .vfd-threshold-flex b{font-size:14px;white-space:nowrap;color:#4a6183}
+#vf-dashboard-v3 .vfd-chart-top{display:flex;justify-content:space-between;align-items:start;gap:10px}
+#vf-dashboard-v3 .vfd-year{font-size:12px;color:#53698b;border:1px solid #dbe5f0;border-radius:8px;padding:6px 10px;white-space:nowrap}
+#vf-dashboard-v3 .vfd-chart{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:5px;height:186px;align-items:end;margin-top:10px;padding:8px 2px 0;border-bottom:1px solid #e8eef5}
+#vf-dashboard-v3 .vfd-month{min-width:0;height:100%;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:7px}
+#vf-dashboard-v3 .vfd-bar{display:block;width:100%;max-width:26px;min-height:2px;background:linear-gradient(180deg,#87bafb,#4394f5);border-radius:4px 4px 0 0;transition:height .25s ease}
+#vf-dashboard-v3 .vfd-month-label{color:#536990;font-size:10px}
+#vf-dashboard-v3 .vfd-chart-empty{min-height:182px;display:flex;align-items:center;justify-content:center;text-align:center;padding:15px;background:#f7f9fd;color:#647b9b;border-radius:10px;line-height:1.6;font-size:13px}
+#vf-dashboard-v3 .vfd-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-top:16px}
+#vf-dashboard-v3 .vfd-kpi{min-width:0;display:flex;align-items:center;gap:12px;padding:19px;border:1px solid #e6ecf4;box-shadow:0 5px 18px rgba(27,50,85,.035);border-radius:13px;background:#fff}
+#vf-dashboard-v3 .vfd-kpi-icon{display:flex;align-items:center;justify-content:center;flex:0 0 44px;height:44px;background:#e7f0ff;color:#1467e4;border-radius:50%;font-size:21px;font-weight:800}
+#vf-dashboard-v3 .vfd-kpi.social .vfd-kpi-icon{background:#e0f7eb;color:#139666}
+#vf-dashboard-v3 .vfd-kpi.total .vfd-kpi-icon{background:#edf1f6;color:#233c67}
+#vf-dashboard-v3 .vfd-kpi small{font-size:11px;color:#7285a0;font-weight:700;letter-spacing:.04em;text-transform:uppercase;display:block}
+#vf-dashboard-v3 .vfd-kpi strong{font-size:21px;letter-spacing:-.025em;color:#122853;display:block;margin-top:5px;font-weight:850;font-variant-numeric:tabular-nums;white-space:nowrap}
+#vf-dashboard-v3 .vfd-kpi.tax strong{color:#1769dc}
+#vf-dashboard-v3 .vfd-kpi.social strong{color:#15895c}
+#vf-dashboard-v3 .vfd-footnote{margin:13px 3px 0;color:#7b8da8;font-size:11px;line-height:1.45}
+@media(max-width:1160px){
+ #vf-dashboard-v3 .vfd-card{padding:17px}
+ #vf-dashboard-v3 .vfd-donut{width:148px;height:148px;flex-basis:148px}
+ #vf-dashboard-v3 .vfd-donut-hole{height:105px;width:105px}
+ #vf-dashboard-v3 .vfd-donut-hole strong{font-size:19px}
+ #vf-dashboard-v3 .vfd-kpi{padding:14px;gap:8px}
+ #vf-dashboard-v3 .vfd-kpi strong{font-size:18px}
+}
+@media(max-width:920px){
+ #vf-dashboard-v3 .vfd-grid{grid-template-columns:1fr}
+ #vf-dashboard-v3 .vfd-kpis{grid-template-columns:1fr}
+ #vf-dashboard-v3 .vfd-donut{width:174px;height:174px;flex-basis:174px}
+ #vf-dashboard-v3 .vfd-donut-hole{height:124px;width:124px}
+}
+@media(max-width:560px){
+ #vf-dashboard-v3 .vfd-card{padding:15px}
+ #vf-dashboard-v3 .vfd-donut-row{gap:12px}
+ #vf-dashboard-v3 .vfd-donut{width:132px;height:132px;flex-basis:132px}
+ #vf-dashboard-v3 .vfd-donut-hole{height:94px;width:94px}
+ #vf-dashboard-v3 .vfd-donut-hole strong{font-size:16px}
+ #vf-dashboard-v3 .vfd-legend{gap:14px;min-width:0}
+ #vf-dashboard-v3 .vfd-legend-row b{font-size:12px}
+ #vf-dashboard-v3 .vfd-legend-amount{font-size:11px}
+ #vf-dashboard-v3 .vfd-card h3{font-size:17px}
+ #vf-dashboard-v3 .vfd-chart{gap:3px}
+ #vf-dashboard-v3 .vfd-bar{max-width:18px}
+ #vf-dashboard-v3 .vfd-month-label{font-size:9px}
+ #dashboardPro .vfd-register{padding:10px 12px;font-size:12px}
+}
