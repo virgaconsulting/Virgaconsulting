@@ -33,19 +33,25 @@ jobs:
           print('Direct 5%/15% rate selections and requirement removal: PASS')
           PY
           curl --fail --silent --show-error --location https://www.virgaconsulting.it/vfiscal-app | grep -q 'vFiscal non verifica automaticamente i requisiti fiscali'
-      - name: Verify visualization module
+      - name: Verify redesigned dashboard and fiscal data
         run: |
+          node --check site-assets/vfiscal-dashboard-v3.js
           node --input-type=module --check < site-assets/vfiscal-support.js
-          grep -q 'La tua attività, in grafici' site-assets/vfiscal-support.js
-          grep -q 'vf-visual-analytics' dist/site-assets/vfiscal-support.js
-          grep -q 'site-assets/vfiscal-support.js' dist/vfiscal-app.html
-      - name: Validate live-model chart integration
-        run: |
+          test -s dist/site-assets/vfiscal-dashboard-v3.js
+          test -s dist/site-assets/vfiscal-dashboard-v3.css
+          grep -q 'vf-dashboard-v3' dist/site-assets/vfiscal-dashboard-v3.js
+          grep -q 'vf-dashboard-v3.css' dist/vfiscal-app.html
+          grep -q 'vf-dashboard-v3.js' dist/vfiscal-app.html
           grep -q 'window.vfAnalyticsSnapshot' dist/vfiscal-app.html
-          grep -q 'VFISCAL_MODEL_READY' dist/vfiscal-app.html
-          grep -q 'VFISCAL_AUTH_USER' dist/vfiscal-app.html
-          grep -q 'values.map((v,i)' dist/site-assets/vfiscal-support.js
-          grep -q 'window.vfAnalyticsSnapshot' dist/site-assets/vfiscal-support.js
+          grep -q 'vfThresholdForYear' dist/vfiscal-app.html
+          grep -q 'reserveTarget:calc.reserveNeed' dist/vfiscal-app.html
+          grep -q 'P.IVA aperta' dist/site-assets/vfiscal-dashboard-v3.js
+          if grep -q 'vf-visual-analytics' dist/site-assets/vfiscal-support.js; then
+            echo "Legacy graph component still deployed"
+            exit 1
+          fi
+          grep -q 'vfd-restyled' dist/site-assets/vfiscal-dashboard-v3.css
+          grep -q 'mainDashboardContent' dist/site-assets/vfiscal-dashboard-v3.js
       - name: Verify release
         run: |
           test -f dist/release.txt
