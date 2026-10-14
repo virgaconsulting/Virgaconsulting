@@ -338,7 +338,34 @@ s=s.replace(
 )
 
 old="""async function act(action){try{const email=$('clientEmail').value.trim();if(!email)throw new Error('Inserisci l’email del cliente.');setMsg('msg','Aggiornamento…');await call({action,email});setMsg('msg',action==='grant'?'Accesso incluso attivato.':'Accesso incluso revocato.');await load()}catch(e){setMsg('msg',e.message,true)}}"""
-new="""async function act(action){try{const email=$('clientEmail').value.trim();if(!email)throw new Error('Inserisci l’email del cliente.');setMsg('msg',action==='create'?'Creazione account…':'Aggiornamento…');const out=await call({action,email});if(action==='create'){if(out.temporary_password){setMsg('msg','Account cliente creato e vFiscal incluso. Password temporanea: '+out.temporary_password+' — comunicala solo al cliente.');}else{setMsg('msg','Account già esistente: accesso Virga Consulting incluso attivato.');}}else{setMsg('msg',action==='grant'?'Accesso incluso attivato.':'Accesso incluso revocato.');}await load()}catch(e){setMsg('msg',e.message,true)}}"""
+new="""async function act(action){
+  try{
+    const email=$('clientEmail').value.trim();
+    if(!email)throw new Error('Inserisci l’email del cliente.');
+    setMsg('msg',action==='create'?'Invio invito in corso…':'Aggiornamento…');
+    const out=await call({action,email});
+    if(action==='create'){
+      const box=$('createdClientResult'),emailEl=$('createdClientEmail');
+      const existingNote=$('existingClientNote');
+      if(emailEl)emailEl.textContent=email;
+      if(box)box.classList.add('show');
+      if(out.invited){
+        if(existingNote)existingNote.style.display='none';
+        setMsg('msg','Invito inviato a '+email+'. Il cliente potrà scegliere la propria password dal link ricevuto.');
+      }else if(out.existing){
+        if(existingNote)existingNote.style.display='block';
+        setMsg('msg','Account già esistente: accesso incluso attivato. Usa le credenziali già in possesso del cliente.');
+      }else{
+        setMsg('msg','Operazione completata.');
+      }
+    }else{
+      setMsg('msg',action==='grant'?'Accesso incluso attivato.':'Accesso incluso revocato.');
+    }
+    await load();
+  }catch(e){
+    setMsg('msg',e.message,true);
+  }
+}"""
 if old not in s:
     raise SystemExit("admin act function not found")
 s=s.replace(old,new,1)
@@ -390,7 +417,7 @@ if 'vf-admin-simple-ui' not in s:
 s=s.replace('Accesso incluso Virga Consulting','Nuovo cliente studio',1)
 s=s.replace(
     'Usalo solo per clienti dello studio ai quali vFiscal è incluso senza pagamento separato.',
-    'Inserisci l’email del cliente. vFiscal creerà l’account gratuito dello Studio e ti mostrerà una password temporanea da consegnargli.',
+    'Inserisci l’email del cliente. Riceverà un invito per attivare gratuitamente vFiscal e scegliere personalmente la password.',
     1
 )
 s=s.replace('Clienti e iscrizioni','I tuoi clienti vFiscal',1)
@@ -399,23 +426,18 @@ s=s.replace('Clienti e iscrizioni','I tuoi clienti vFiscal',1)
 pattern=r'''<div class="grant">\s*(<input[^>]*id="clientEmail"[^>]*>)\s*<button class="btn" onclick="act\('create'\)">Crea account incluso</button>\s*<button class="btn secondary" onclick="act\('grant'\)">Attiva incluso</button>\s*<button class="btn danger" onclick="act\('revoke'\)">Revoca incluso</button>\s*</div>'''
 replacement=r'''<div class="simple-create">
         <h3 class="simple-create-title">Nuovo cliente studio</h3>
-        <p class="simple-create-sub">Crea in pochi secondi un account vFiscal incluso nel servizio Virga Consulting.</p>
+        <p class="simple-create-sub">Invia un invito email al cliente: potrà scegliere da solo la password e accedere a vFiscal senza pagare.</p>
         <div class="simple-create-row">
           <div><label for="clientEmail">Email cliente</label>\1</div>
           <button class="btn" onclick="act('create')">+ Crea cliente</button>
         </div>
         <div id="createdClientResult" class="created-client">
-          <strong>✓ Cliente creato e vFiscal attivato</strong>
+          <strong>✓ Invito pronto</strong>
           <div class="credential-line">
             <span class="credential-label">Email</span>
             <span id="createdClientEmail" class="credential-value">—</span>
           </div>
-          <div id="createdPasswordLine" class="credential-line">
-            <span class="credential-label">Password</span>
-            <span id="createdClientPassword" class="credential-value">—</span>
-            <button type="button" class="copy-btn" onclick="copyTempPassword()">Copia password</button>
-          </div>
-          <div id="existingClientNote" class="small" style="display:none;margin-top:9px">Account già esistente: ho semplicemente attivato l’accesso incluso.</div>
+          <div id="existingClientNote" class="small" style="display:none;margin-top:9px">Account già esistente: accesso gratuito attivato. Il cliente può entrare con le proprie credenziali.</div>
         </div>
       </div>
       <details class="admin-advanced">
