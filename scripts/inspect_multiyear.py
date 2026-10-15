@@ -6,9 +6,9 @@ names=[
 "vfInputForYear","vfCalculateSelected","vfSaveCalculation","vfProjectedSocialAdvance","vfRenderPaymentPlan","vfCalculatePaymentPlan","vfRenderSummary","vfRenderScenario","updateDashboardUI","refreshFromModel","vfSyncYearInputs","vfSwitchYear","vfSetYear","vfYearByNumber","vfProjectedSocialAdvance","vfFinancialForecast","vfForecast","vfThresholdForYear",
 ]
 for name in names:
-    m=re.search(r'(?m)^(?:(?:async )?function\\s+|const\\s+)'+re.escape(name)+r'\\b',s)
+    m=re.search(r'(?m)^(?:(?:async )?function\s+|const\s+)'+re.escape(name)+r'\b',s)
     if not m:
-        m=re.search(r'(?m)^(?:(?:async )?function\\s+|const\\s+)'+re.escape(name)+r'\b',s)
+        m=re.search(r'(?m)^(?:(?:async )?function\s+|const\s+)'+re.escape(name)+r'\b',s)
     if not m: continue
     tail=s[m.start():]
     end=re.search(r'(?m)^\}\s*(?:;)?\s*$',tail)
