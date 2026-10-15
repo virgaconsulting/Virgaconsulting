@@ -1138,6 +1138,20 @@ PY
 # Improve existing fiscal simulator across multiple tax years, without changing screens.
 python3 scripts/upgrade_multiyear.py "$OUT/vfiscal-app.html"
 
+# Studio owners see a read-only overview of all customer fiscal data on login.
+cp site-assets/vfiscal-studio-overview.js "$OUT/site-assets/vfiscal-studio-overview.js"
+cp site-assets/vfiscal-studio-overview.css "$OUT/site-assets/vfiscal-studio-overview.css"
+python3 - "$OUT/vfiscal-admin.html" <<'PY'
+from pathlib import Path
+import sys
+p=Path(sys.argv[1]);html=p.read_text()
+style='<link rel="stylesheet" href="/site-assets/vfiscal-studio-overview.css">'
+script='<script defer src="/site-assets/vfiscal-studio-overview.js"></script>'
+if style not in html:html=html.replace('</head>',style+'\n</head>',1)
+if script not in html:html=html.replace('</body>',script+'\n</body>',1)
+p.write_text(html)
+PY
+
 # Final production audit: internal links, critical flows, IDs and JavaScript syntax.
 python3 - "$OUT" <<'PY'
 from pathlib import Path
