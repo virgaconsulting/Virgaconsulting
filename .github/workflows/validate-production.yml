@@ -21,8 +21,6 @@ jobs:
         run: bash -n build.sh
       - name: Build production bundle
         run: bash build.sh
-      - name: Inspect customer overview and deadlines UI
-        run: python3 scripts/inspect_customer_ui.py
       - name: Inspect multi-year engine before upgrade
         run: python3 scripts/inspect_multiyear.py
       - name: Test fiscal calculations for multiple annualities
@@ -65,6 +63,17 @@ jobs:
           grep -q 'studio_overview' dist/site-assets/vfiscal-studio-overview.js
           grep -q 'Panoramica dello Studio' dist/site-assets/vfiscal-studio-overview.js
           grep -q 'vf-studio-admin-signed-out' dist/site-assets/vfiscal-studio-overview.js
+      - name: Verify customer simplicity and unchanged F24 handlers
+        run: |
+          node --check site-assets/vfiscal-deadlines-simple.js
+          node --check site-assets/vfiscal-dashboard-v3.js
+          test -s dist/site-assets/vfiscal-deadlines-simple.js
+          grep -q 'vfiscal-deadlines-simple.js' dist/vfiscal-app.html
+          grep -q 'Quanto mettere da parte' dist/site-assets/vfiscal-dashboard-v3.js
+          grep -q 'Registra un F24 già pagato' dist/site-assets/vfiscal-deadlines-simple.js
+          grep -q 'savePaymentRecord' dist/vfiscal-app.html
+          grep -q 'savePaymentData' dist/vfiscal-app.html
+          grep -q 'vfPaymentCalendar' dist/vfiscal-app.html
       - name: Verify redesigned dashboard and fiscal data
         run: |
           node --check site-assets/vfiscal-dashboard-v3.js
