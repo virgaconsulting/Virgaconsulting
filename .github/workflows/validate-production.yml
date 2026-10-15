@@ -21,6 +21,8 @@ jobs:
         run: bash -n build.sh
       - name: Build production bundle
         run: bash build.sh
+      - name: Inspect customer overview and deadlines UI
+        run: python3 scripts/inspect_customer_ui.py
       - name: Inspect multi-year engine before upgrade
         run: python3 scripts/inspect_multiyear.py
       - name: Test fiscal calculations for multiple annualities
