@@ -3,7 +3,7 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 const html=fs.readFileSync('dist/vfiscal-app.html','utf8');
 const start=html.indexOf('const RULES_IT_2026 = Object.freeze(');
-const end=html.indexOf('const VF_MODEL_BASE_KEY=',start);
+const end=html.indexOf('</script>',start);
 assert(start>0&&end>start,'Tax core extraction failed');
 const sandbox={
   console,Math,Date,Number,String,Array,Object,JSON,Set,Map,Intl,
@@ -12,7 +12,9 @@ const sandbox={
   alert:()=>{},location:{},setTimeout:()=>0,clearTimeout:()=>{}
 };
 vm.createContext(sandbox);
-vm.runInContext(html.slice(start,end),sandbox,{timeout:1800,filename:'vfiscal-core-2026.js'});
+const forecastFn=html.match(/^function vfRulesForYear\(year\)\{[\s\S]*?^\}/m);
+assert(forecastFn,'Provisional year-rule function missing');
+vm.runInContext(html.slice(start,end)+'\n'+forecastFn[0],sandbox,{timeout:1800,filename:'vfiscal-core-2026.js'});
 const grab=name=>vm.runInContext(name,sandbox);
 const annual=grab('vfRulesForYear'),calculate=grab('calculateVFiscal');
 const p2026=annual(2026),p2027=annual(2027),p2028=annual(2028);
