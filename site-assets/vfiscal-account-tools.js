@@ -91,6 +91,8 @@ if(isAdmin){
    try{
      const list=await call({action:'list'});pane.style.display='block';
      clients=list.clients||[];
+     window.vfStudioAdminCall=call;
+     window.dispatchEvent(new Event('vf-studio-admin-ready'));
      const old=pick.value;pick.replaceChildren();
      const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='Scegli un cliente';pick.appendChild(placeholder);
      clients.forEach(c=>{const option=document.createElement('option');option.value=c.user_id;option.textContent=(c.email||'Cliente')+' — '+(c.access_type==='virga_client'?'Incluso':'Pagante/altro');pick.appendChild(option)});
