@@ -1135,6 +1135,9 @@ for tag in ['<script type="module" src="/site-assets/vfiscal-account-tools.js"><
 app.write_text(v)
 PY
 
+# Improve existing fiscal simulator across multiple tax years, without changing screens.
+python3 scripts/upgrade_multiyear.py "$OUT/vfiscal-app.html"
+
 # Final production audit: internal links, critical flows, IDs and JavaScript syntax.
 python3 - "$OUT" <<'PY'
 from pathlib import Path
