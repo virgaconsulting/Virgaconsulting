@@ -117,6 +117,7 @@ if(isAdmin){
    if(event==='SIGNED_OUT'){
      delete window.vfStudioAdminCall;
      window.dispatchEvent(new Event('vf-studio-admin-signed-out'));
+     document.getElementById('vf-studio-overview')?.remove();
      pane.style.display='none';
    }
  });
