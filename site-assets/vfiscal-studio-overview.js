@@ -87,8 +87,10 @@ async function load(){
  try{
   data=await window.vfStudioAdminCall({action:'studio_overview',year:Number(yr.value)});
   if(!root.isConnected){
-   const detail=document.getElementById('vf-studio-finance'),parent=detail?.parentElement||document.querySelector('main')||document.body;
-   parent.insertBefore(root,detail||parent.firstChild);
+   const detail=document.getElementById('vf-studio-finance');
+   const main=document.querySelector('main');
+   const parent=main||detail?.parentElement||document.body;
+   parent.insertBefore(root,main?parent.firstChild:detail||parent.firstChild);
   }
   root.style.display='block';render();
  }catch(e){if(root.isConnected)dom('vfo-state').textContent=e.message||'Dati non disponibili'}
