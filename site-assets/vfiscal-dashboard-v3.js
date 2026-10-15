@@ -1,204 +1,141 @@
-
-/* vFiscal: responsive overview v3. Strictly read-only; all figures come from the authenticated fiscal model. */
+/* vFiscal customer overview: simple, readable, based only on saved fiscal data. */
 (function(){
-  'use strict';
-  if(!location.pathname.includes('vfiscal-app'))return;
-  const nf=new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR',minimumFractionDigits:2,maximumFractionDigits:2});
-  const pct=new Intl.NumberFormat('it-IT',{maximumFractionDigits:1});
-  const months=['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
-  const fullMonths=['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
-  const finite=(v)=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v));
-  const number=(v)=>finite(v)?Math.max(0,Number(v)):0;
-  const euro=(v)=>finite(v)?nf.format(number(v)):'—';
-  const percent=(v)=>pct.format(v)+'%';
-  const clamp=(x)=>Math.max(0,Math.min(100,Number.isFinite(x)?x:0));
-  let panel=null, lastSignature='';
-  const markup=[
-    '<div class="vfd-grid">',
-      '<article class="vfd-card vfd-card-breakdown" aria-label="Ripartizione delle stime fiscali">',
-        '<div class="vfd-card-head"><h3>Imposta e contributi</h3><p class="vfd-sub">Composizione del carico fiscale stimato</p></div>',
-        '<div class="vfd-donut-row">',
-          '<div class="vfd-donut" data-vfd="ring" role="img" aria-label="Ripartizione imposta e contributi">',
-            '<div class="vfd-donut-hole"><strong data-vfd="total">—</strong><span>Totale stimato</span></div>',
-          '</div>',
-          '<div class="vfd-legend">',
-            '<div class="vfd-legend-row"><i class="vfd-dot vfd-tax-dot" aria-hidden="true"></i><div><b>Imposta</b><span data-vfd="tax" class="vfd-legend-amount tax">—</span></div></div>',
-            '<div class="vfd-legend-row"><i class="vfd-dot vfd-social-dot" aria-hidden="true"></i><div><b>Contributi</b><span data-vfd="social" class="vfd-legend-amount social">—</span></div></div>',
-          '</div>',
-        '</div>',
-      '</article>',
-      '<article class="vfd-card vfd-card-fund">',
-        '<div class="vfd-card-head"><h3>Fondo tasse</h3><p class="vfd-sub">Quanto hai già accantonato rispetto alla stima</p></div>',
-        '<div class="vfd-big" data-vfd="fundPercent">—</div>',
-        '<div class="vfd-big-note">del fabbisogno stimato</div>',
-        '<div class="vfd-progress"><div data-vfd="fundBar"></div></div>',
-        '<div class="vfd-progress-labels"><span>0%</span><span>100%</span></div>',
-        '<div class="vfd-progress-copy"><span>Già accantonato: <strong data-vfd="held">—</strong></span><span>Da accantonare: <strong data-vfd="missing">—</strong></span></div>',
-      '</article>',
-      '<article class="vfd-card vfd-card-threshold">',
-        '<div class="vfd-card-head"><h3>Soglia del forfettario</h3><p class="vfd-sub">Incassi rispetto al limite applicabile per l’anno</p></div>',
-        '<div class="vfd-big" data-vfd="receipts">—</div>',
-        '<div class="vfd-threshold-flex"><div class="vfd-progress"><div data-vfd="thresholdBar"></div></div><b data-vfd="thresholdPct">—</b></div>',
-        '<div class="vfd-progress-copy"><span data-vfd="thresholdLabel">Soglia: <strong data-vfd="threshold">—</strong></span><span>Margine residuo: <strong data-vfd="margin">—</strong></span></div>',
-        '<div class="vfd-note" data-vfd="thresholdNote" hidden></div>',
-      '</article>',
-      '<article class="vfd-card vfd-card-income">',
-        '<div class="vfd-chart-top"><div class="vfd-card-head"><h3>Andamento degli incassi</h3><p class="vfd-sub">Incassi registrati mese per mese</p></div><span class="vfd-year" data-vfd="year">—</span></div>',
-        '<div data-vfd="monthly" aria-live="polite"></div>',
-      '</article>',
-    '</div>',
-    '<div class="vfd-kpis">',
-      '<div class="vfd-kpi tax"><span class="vfd-kpi-icon" aria-hidden="true">€</span><div><small>Imposta stimata</small><strong data-vfd="taxKpi">—</strong></div></div>',
-      '<div class="vfd-kpi social"><span class="vfd-kpi-icon" aria-hidden="true">◎</span><div><small>Contributi stimati</small><strong data-vfd="socialKpi">—</strong></div></div>',
-      '<div class="vfd-kpi total"><span class="vfd-kpi-icon" aria-hidden="true">∑</span><div><small>Totale stimato</small><strong data-vfd="totalKpi">—</strong></div></div>',
-    '</div>',
-    '<p class="vfd-footnote">Stime indicative basate sul tuo profilo fiscale. Il saldo e gli acconti sono disponibili nelle rispettive sezioni.</p>'
-  ].join('');
-  function create(){
-    const host=document.getElementById('mainDashboardContent');
-    const shell=document.getElementById('dashboardPro');
-    if(!host||!shell)return false;
-    if(!panel){
-      panel=document.createElement('section');
-      panel.id='vf-dashboard-v3';
-      panel.setAttribute('aria-label','Panoramica fiscale vFiscal');
-      panel.innerHTML=markup;
-    }
-    if(!panel.isConnected)host.insertBefore(panel,host.firstChild);
-    const actions=shell.querySelector('.head-tools');
-    if(actions&&!actions.querySelector('.vfd-register')){
-      const button=document.createElement('button');
-      button.type='button';
-      button.className='vfd-register';
-      button.textContent='+ Registra incasso';
-      button.addEventListener('click',()=>{
-        if(typeof window.openReceiptComposer==='function')window.openReceiptComposer();
-        else if(typeof window.vfNavigate==='function')window.vfNavigate('receipts');
-      });
-      actions.appendChild(button);
-    }
-    shell.classList.add('vfd-restyled');
-    return true;
-  }
-  function field(name){return panel?.querySelector('[data-vfd="'+name+'"]')}
-  function put(name,value){const target=field(name);if(target&&target.textContent!==String(value))target.textContent=value}
-  function progress(name,value){const target=field(name);if(target)target.style.width=clamp(value)+'%'}
-  function drawMonthly(d){
-    const target=field('monthly');if(!target)return;
-    const values=Array.isArray(d.monthly)&&d.monthly.length===12?d.monthly.map(number):null;
-    const known=values&&values.some(v=>v>0);
-    if(!known){
-      const note=number(d.openingBalance)>0?
-        'Hai un saldo iniziale di '+euro(d.openingBalance)+'. È incluso negli incassi totali, ma non nel grafico mensile perché non ha una data.' :
-        'Registra il primo incasso con data per visualizzare l’andamento mese per mese.';
-      target.className='vfd-chart-empty';
-      if(target.textContent!==note)target.textContent=note;
-      return;
-    }
-    target.className='vfd-chart';
-    const max=Math.max(...values,1);
-    target.replaceChildren();
-    values.forEach((value,i)=>{
-      const item=document.createElement('div');item.className='vfd-month';
-      item.title=fullMonths[i]+': '+euro(value);
-      const bar=document.createElement('div');bar.className='vfd-bar';
-      bar.style.height=value>0?Math.max(3,Math.round(value/max*135))+'px':'2px';
-      const label=document.createElement('span');label.className='vfd-month-label';label.textContent=months[i];
-      item.append(bar,label);target.appendChild(item);
-    });
-  }
-  function draw(d){
-    const tax=finite(d.tax)?number(d.tax):null;
-    const social=finite(d.social)?number(d.social):null;
-    const total=tax!==null&&social!==null?tax+social:null;
-    const held=number(d.held);
-    const reserveTarget=finite(d.reserveTarget)?number(d.reserveTarget):total;
-    const fraction=total&&total>0?tax/total*100:0;
-    put('total',euro(total));
-    put('tax',euro(tax)+(total>0?' ('+percent(fraction)+')':''));
-    put('social',euro(social)+(total>0?' ('+percent(100-fraction)+')':''));
-    const ring=field('ring');
-    if(ring){
-      ring.style.background=total>0?
-        'conic-gradient(#1268ef 0% '+fraction+'%,#23bf7c '+fraction+'% 100%)':'#eaf0f7';
-      ring.setAttribute('aria-label',total>0?'Imposta '+euro(tax)+'; contributi '+euro(social):'Stima non ancora disponibile');
-    }
-    const fundPercent=reserveTarget!==null&&reserveTarget>0?held/reserveTarget*100:(reserveTarget===0?100:0);
-    put('fundPercent',reserveTarget===null?'—':percent(Math.round(fundPercent)));
-    put('held',euro(held));
-    put('missing',reserveTarget===null?'—':euro(Math.max(0,reserveTarget-held)));
-    progress('fundBar',fundPercent);
-    const receipts=number(d.receipts);
-    const rawThreshold=d.threshold;
-    const threshold=finite(rawThreshold)?Number(rawThreshold):null;
-    const hasLimit=threshold!==null && threshold>0;
-    const thresholdRatio=hasLimit?receipts/threshold*100:0;
-    put('receipts',euro(receipts));
-    put('threshold',hasLimit?euro(threshold):'—');
-    put('margin',hasLimit?euro(Math.max(0,threshold-receipts)):'—');
-    put('thresholdPct',hasLimit?percent(thresholdRatio):'—');
-    progress('thresholdBar',thresholdRatio);
-    const firstYear=String(d.startDate||'').slice(0,4)===String(d.year);
-    const days=Number(d.thresholdDays),yearDays=Number(d.yearDays);
-    const isProrated=hasLimit && firstYear && days>0 && yearDays>0 && days<yearDays;
-    const thresholdLabel=field('thresholdLabel');
-    if(thresholdLabel){
-      const label=!hasLimit?'Limite non disponibile: ':isProrated?'Limite '+d.year+' ragguagliato: ':'Soglia annua '+d.year+': ';
-      thresholdLabel.firstChild.textContent=label;
-    }
-    const note=field('thresholdNote');
-    if(note){
-      if(d.missingStartDate || !hasLimit){
-        note.hidden=false;
-        note.textContent=d.missingStartDate
-          ? 'Inserisci una data di apertura valida nel Profilo fiscale per calcolare il limite applicabile.'
-          : 'Limite non disponibile per questo anno: controlla la data di apertura nel Profilo fiscale.';
-      }else if(isProrated){
-        const parts=String(d.startDate).split('-');
-        const pretty=parts.length===3?parts[2]+'/'+parts[1]+'/'+parts[0]:String(d.startDate);
-        const formula='85.000 € × '+days+' giorni / '+yearDays+' giorni';
-        let message='P.IVA aperta il '+pretty+'. Periodo: '+pretty+' – 31/12/'+d.year+' ('+days+' giorni). Limite: '+formula+'.';
-        if(receipts>100000){
-          message+=' Superati 100.000 €: è prevista la fuoriuscita immediata dal regime.';
-        }else if(receipts>threshold){
-          message+=' Attenzione: superato il limite ragguagliato, da verificare la permanenza nel regime nell’anno successivo.';
-        }else{
-          message+=' La soglia di uscita immediata di 100.000 € non è ragguagliata.';
-        }
-        note.hidden=false;note.textContent=message;
-      }else if(receipts>100000){
-        note.hidden=false;
-        note.textContent='Superati 100.000 €: è prevista la fuoriuscita immediata dal regime forfettario.';
-      }else if(receipts>threshold){
-        note.hidden=false;
-        note.textContent='Superato il limite ordinario: verifica la permanenza nel regime per l’anno successivo.';
-      }else{
-        note.hidden=true;
-        note.textContent='';
-      }
-    }
-    const thresholdProgress=field('thresholdBar')?.parentElement;
-    if(thresholdProgress)thresholdProgress.classList.toggle('warning',hasLimit&&thresholdRatio>=100);
-    put('year',d.year);
-    put('taxKpi',euro(tax));
-    put('socialKpi',euro(social));
-    put('totalKpi',euro(total));
-    drawMonthly(d);
-  }
-  function refresh(){
-    if(typeof window.vfAnalyticsSnapshot!=='function')return;
-    let snapshot=null;
-    try{snapshot=window.vfAnalyticsSnapshot()}catch(err){console.warn('Dati grafici non disponibili:',err);return}
-    if(!snapshot?.ready)return;
-    if(!create())return;
-    const signature=JSON.stringify(snapshot);
-    if(signature===lastSignature)return;
-    lastSignature=signature;
-    draw(snapshot);
-  }
-  window.vfRefreshDashboardV3=refresh;
-  setInterval(()=>{if(!document.hidden)refresh()},2400);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh,{once:true});
-  else refresh();
+'use strict';
+if(!/\/vfiscal-app(?:\.html)?$/.test(location.pathname))return;
+const eur=new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'});
+const pct=new Intl.NumberFormat('it-IT',{maximumFractionDigits:1});
+const months=['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+const valid=v=>v!==undefined&&v!==null&&v!==''&&Number.isFinite(Number(v));
+const cash=v=>valid(v)?eur.format(Number(v)):'—';
+const n=v=>valid(v)?Math.max(0,Number(v)):0;
+const clamp=v=>Math.min(100,Math.max(0,Number.isFinite(v)?v:0));
+let panel=null,last='';
+const html=[
+'<div class="v4-hero"><div><span class="v4-eyebrow">Incassi registrati · <span data-v4="year">—</span></span>',
+'<strong data-v4="receipts">—</strong><div class="v4-muted">I tuoi incassi reali, non una previsione.</div></div>',
+'<button class="v4-primary" type="button" data-v4-action="receipt">＋ Registra incasso</button></div>',
+'<div class="v4-cards">',
+'<article class="v4-card"><h3>Tasse e contributi stimati</h3>',
+'<p class="v4-muted">Quanto stai maturando con gli incassi registrati.</p>',
+'<div class="v4-value blue" data-v4="burden">—</div>',
+'<div class="v4-divider"></div>',
+'<div class="v4-split"><span><i></i> Imposta sostitutiva</span><strong data-v4="tax">—</strong></div>',
+'<div class="v4-split" style="margin-top:9px"><span><i class="green"></i> Contributi</span><strong data-v4="social">—</strong></div>',
+'<p class="v4-notice">È un costo stimato dell’anno, non la somma dei prossimi F24.</p></article>',
+'<article class="v4-card"><h3>Quanto mettere da parte</h3>',
+'<p class="v4-muted">La parte non ancora coperta dal fondo tasse.</p>',
+'<div class="v4-value green" data-v4="missing">—</div>',
+'<div class="v4-track green"><div data-v4="fundBar"></div></div>',
+'<div class="v4-split"><span>Già accantonato</span><strong data-v4="held">—</strong></div>',
+'<div class="v4-foot" style="margin-top:14px"><span class="v4-muted" data-v4="fundPct">—</span>',
+'<button class="v4-light" type="button" data-v4-action="fund">Gestisci fondo</button></div>',
+'<p class="v4-notice">Accantonamento rispetto alle imposte e ai contributi stimati; i saldi e gli acconti hanno scadenze proprie.</p></article>',
+'<article class="v4-card"><h3>Limite forfettario</h3>',
+'<p class="v4-muted">Il tetto di incassi applicabile all’anno selezionato.</p>',
+'<div class="v4-value" data-v4="threshold">—</div>',
+'<div class="v4-track" data-v4="thresholdTrack"><div data-v4="thresholdBar"></div></div>',
+'<div class="v4-split"><span>Margine rimasto</span><strong data-v4="margin">—</strong></div>',
+'<p class="v4-notice" data-v4="thresholdNote">—</p></article>',
+'<article class="v4-card"><div class="v4-foot"><div><h3>Incassi mese per mese</h3>',
+'<p class="v4-muted">Solo i movimenti che hanno una data.</p></div>',
+'<button class="v4-light" type="button" data-v4-action="history">Vedi incassi</button></div>',
+'<div data-v4="chart"></div>',
+'<p class="v4-notice">I saldi iniziali senza data restano nel totale degli incassi, ma non vengono collocati in un mese arbitrario.</p></article>',
+'</div>',
+'<div class="v4-foot" style="padding:2px 1px 16px">',
+'<span class="v4-muted">Vuoi sapere quando pagare, quanto e perché?</span>',
+'<button class="v4-light" type="button" data-v4-action="deadlines">Vai alle scadenze →</button></div>'
+].join('');
+function field(key){return panel?.querySelector('[data-v4="'+key+'"]')}
+function set(key,value){const el=field(key);if(el&&el.textContent!==String(value))el.textContent=value}
+function bar(key,value){const el=field(key);if(el)el.style.width=clamp(value)+'%'}
+function monthChart(d){
+ const host=field('chart');if(!host)return;
+ const data=Array.isArray(d.monthly)&&d.monthly.length===12?d.monthly.map(n):null;
+ const any=data&&data.some(x=>x>0);
+ const signature=JSON.stringify(data);
+ if(host.dataset.last===signature)return;
+ host.dataset.last=signature;host.replaceChildren();
+ if(!any){
+   const empty=document.createElement('div');empty.className='v4-blank';
+   empty.textContent=n(d.openingBalance)>0?
+      'Gli incassi sono presenti come saldo iniziale. Registra i prossimi incassi con data per vedere il grafico.':
+      'Nessun incasso datato ancora registrato. Il grafico si compila automaticamente.';
+   host.append(empty);return;
+ }
+ const graph=document.createElement('div');graph.className='v4-chart';
+ const max=Math.max(1,...data);
+ data.forEach((value,i)=>{
+   const col=document.createElement('div');col.className='v4-month';
+   const item=document.createElement('div');item.className='v4-bar';
+   item.style.height=value?Math.max(3,value/max*95)+'px':'2px';
+   col.title=months[i]+': '+cash(value);
+   const label=document.createElement('small');label.textContent=months[i];
+   col.append(item,label);graph.append(col);
+ });
+ host.append(graph);
+}
+function render(d){
+ set('year',d.year);
+ set('receipts',cash(d.receipts));
+ const hasSocial=valid(d.social)&&!(d.socialScheme==='custom'&&n(d.social)===0);
+ const complete=valid(d.tax)&&hasSocial;
+ const burden=complete?n(d.tax)+n(d.social):null;
+ set('tax',cash(d.tax));
+ set('social',hasSocial?cash(d.social):'Da completare');
+ set('burden',complete?cash(burden):'Da completare');
+ const held=n(d.held);
+ set('held',cash(held));
+ const target=complete&&valid(d.reserveTarget)?n(d.reserveTarget):burden;
+ set('missing',target!==null?cash(Math.max(0,target-held)):'—');
+ const filled=target!==null?(target>0?held/target*100:100):0;
+ bar('fundBar',filled);
+ set('fundPct',target===null?'Completa i dati previdenziali':pct.format(filled)+'% del carico stimato coperto');
+ const limit=valid(d.threshold)&&Number(d.threshold)>0?Number(d.threshold):null;
+ const use=limit?n(d.receipts)/limit*100:0;
+ set('threshold',limit?cash(limit):'Da completare');
+ set('margin',limit?cash(Math.max(0,limit-n(d.receipts))):'—');
+ bar('thresholdBar',use);
+ field('thresholdTrack')?.classList.toggle('warning',!!limit&&use>=100);
+ const isFirst=String(d.startDate||'').slice(0,4)===String(d.year);
+ const prorated=isFirst&&limit&&n(d.thresholdDays)>0&&n(d.yearDays)>0&&n(d.thresholdDays)<n(d.yearDays);
+ let note=prorated?'P.IVA aperta il '+d.startDate.split('-').reverse().join('/')+
+   ': limite ragguagliato a '+d.thresholdDays+' giorni su '+d.yearDays+'.':
+   'Limite annuale ordinario di 85.000 € (quando applicabile).';
+ if(!limit)note='Inserisci una data di apertura valida nel Profilo fiscale per calcolare il limite.';
+ if(limit&&n(d.receipts)>100000)note+=' Attenzione: oltre 100.000 € può scattare l’uscita immediata.';
+ else if(limit&&n(d.receipts)>limit)note+=' Limite ordinario superato: verifica la permanenza nel regime.';
+ set('thresholdNote',note);
+ monthChart(d);
+}
+function mount(){
+ const host=document.getElementById('mainDashboardContent'),dash=document.getElementById('dashboardPro');
+ if(!host||!dash)return false;
+ if(!panel){
+   panel=document.createElement('section');panel.id='vf-dashboard-v3';
+   panel.setAttribute('aria-label','Panoramica vFiscal essenziale');
+   panel.innerHTML=html;
+   panel.addEventListener('click',e=>{
+     const btn=e.target.closest('[data-v4-action]');if(!btn)return;
+     const action=btn.dataset.v4Action;
+     if(action==='receipt')window.openReceiptComposer?.();
+     else if(action==='history')window.showDashPanel?.('history');
+     else if(action==='fund')window.showDashPanel?.('fund');
+     else if(action==='deadlines')window.vfNavigate?.('deadlines');
+   });
+ }
+ if(!panel.isConnected)host.prepend(panel);
+ dash.classList.add('vfd-restyled');return true;
+}
+function update(){
+ if(document.hidden||typeof window.vfAnalyticsSnapshot!=='function')return;
+ let d=null;try{d=window.vfAnalyticsSnapshot()}catch(e){console.warn('Panoramica non disponibile',e);return}
+ if(!d?.ready||!mount())return;
+ const next=JSON.stringify(d);
+ if(next===last)return;last=next;render(d);
+}
+window.vfRefreshDashboardV3=update;
+setInterval(update,2700);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)update()});
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',update,{once:true});else update();
 })();
