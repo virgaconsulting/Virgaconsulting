@@ -99,6 +99,7 @@ root.querySelectorAll('[data-vfo]').forEach(button=>button.addEventListener('cli
  filter=button.dataset.vfo;root.querySelectorAll('[data-vfo]').forEach(x=>x.classList.toggle('active',x===button));render();
 }));
 window.addEventListener('vf-studio-admin-ready',load);
+window.addEventListener('vf-studio-admin-signed-out',()=>{data=null;root.style.display='none'});
 setInterval(()=>{if(!data||Date.now()-new Date(data.generated_at).getTime()>120000)load()},12000);
 setTimeout(load,1500);
 }
