@@ -11,7 +11,14 @@ for term in terms:
 print('PAYMENT IDS')
 for m in re.finditer(r'<[^>]+id="([^"]*(?:pay|Pay|Deadline|deadline|due|Due|Scad|scad)[^"]*)"[^>]*>',page):
     print(m.group(1),repr(m.group(0)[:270]))
-print('HANDLER DECLARATIONS')
-for m in re.finditer(r'(?m)^(?:async\\s+)?function\\s+([\\w$]+)\\(',page):
-    if any(x in m.group(1).lower() for x in ['payment','deadline','schedule','due','scad','dash','panel','calendar','year']):
-        print(m.group(1),m.start())
+print('PAYMENT PANEL MARKUP:')
+a=page.index('<div id="dashPanelPayments"')
+b=page.index('<div id="dashPanelScenario"',a)
+print(page[a:min(b,a+19000)])
+print('CALENDAR/DEADLINES RENDER CODE:')
+for token in ['function togglePaymentCalendar','function vfPopulatePaymentPanel','function vfBuildPaymentProjection','function updateDashboardUI','function vfRenderPaymentRecords','function vfBuildPaymentCalendar','function vfPaymentCalendar']:
+    loc=page.find(token)
+    if loc<0:continue
+    end=page.find('\\n}',loc)
+    print('FUNCTION',token,'length',end-loc if end>loc else 'unknown')
+    print(page[loc:min(loc+14000,end+2 if end>loc else loc+14000)])
