@@ -113,6 +113,13 @@ if(isAdmin){
      flash('Account eliminato.');selected='';current=null;await loadUsers();pick.value='';await loadOne();
    }catch(e){flash(e.message)}finally{deleteBtn.disabled=!pick.value}
  });
+ db.auth.onAuthStateChange((event)=>{
+   if(event==='SIGNED_OUT'){
+     delete window.vfStudioAdminCall;
+     window.dispatchEvent(new Event('vf-studio-admin-signed-out'));
+     pane.style.display='none';
+   }
+ });
  // Wait for existing admin login to complete; only allowlisted administrators get data.
  (document.querySelector('main')||document.body).appendChild(pane);
  setInterval(()=>{if(!pane.isConnected)return;if(pane.style.display==='none')loadUsers()},4500);
