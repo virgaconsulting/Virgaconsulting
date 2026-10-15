@@ -1152,6 +1152,19 @@ if script not in html:html=html.replace('</body>',script+'\n</body>',1)
 p.write_text(html)
 PY
 
+# Customer deadlines: keep fiscal math and F24 forms, simplify first visual layer.
+cp site-assets/vfiscal-deadlines-simple.js "$OUT/site-assets/vfiscal-deadlines-simple.js"
+python3 - "$OUT/vfiscal-app.html" <<'PY'
+from pathlib import Path
+import sys
+p=Path(sys.argv[1]);html=p.read_text()
+script='<script defer src="/site-assets/vfiscal-deadlines-simple.js"></script>'
+if script not in html:
+    if '</body>' not in html:raise SystemExit('Customer deadlines page closing tag missing')
+    html=html.replace('</body>',script+'\n</body>',1)
+p.write_text(html)
+PY
+
 # Final production audit: internal links, critical flows, IDs and JavaScript syntax.
 python3 - "$OUT" <<'PY'
 from pathlib import Path
