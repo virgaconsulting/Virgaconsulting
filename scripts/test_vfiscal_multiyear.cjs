@@ -14,7 +14,7 @@ const sandbox={
 vm.createContext(sandbox);
 const forecastFn=html.match(/^function vfRulesForYear\(year\)\{[\s\S]*?^\}/m);
 assert(forecastFn,'Provisional year-rule function missing');
-vm.runInContext(html.slice(start,end)+'\n'+forecastFn[0],sandbox,{timeout:1800,filename:'vfiscal-core-2026.js'});
+let core=html.slice(start,end);const listeners=core.indexOf("document.getElementById('receipts').addEventListener");if(listeners>0)core=core.slice(0,listeners);\nvm.runInContext(core+'\n'+forecastFn[0],sandbox,{timeout:1800,filename:'vfiscal-core-2026.js'});
 const grab=name=>vm.runInContext(name,sandbox);
 const annual=grab('vfRulesForYear'),calculate=grab('calculateVFiscal');
 const p2026=annual(2026),p2027=annual(2027),p2028=annual(2028);
