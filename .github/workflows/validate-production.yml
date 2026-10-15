@@ -21,6 +21,8 @@ jobs:
         run: bash -n build.sh
       - name: Build production bundle
         run: bash build.sh
+      - name: Inspect multi-year engine before upgrade
+        run: python3 scripts/inspect_multiyear.py
       - name: Verify direct 5% and 15% selection
         run: |
           python3 - <<'PY'
