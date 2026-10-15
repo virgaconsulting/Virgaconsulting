@@ -52,6 +52,17 @@ jobs:
           grep -q 'Password provvisoria' dist/vfiscal-admin.html
           grep -q 'Cambia password' dist/site-assets/vfiscal-account-tools.js
           grep -q 'Elimina account selezionato' dist/site-assets/vfiscal-account-tools.js
+      - name: Verify private aggregate studio reporting
+        run: |
+          node --check site-assets/vfiscal-studio-overview.js
+          test -s dist/site-assets/vfiscal-studio-overview.js
+          test -s dist/site-assets/vfiscal-studio-overview.css
+          grep -q 'vfiscal-studio-overview.js' dist/vfiscal-admin.html
+          grep -q 'vfiscal-studio-overview.css' dist/vfiscal-admin.html
+          grep -q 'vfStudioAdminCall' dist/site-assets/vfiscal-account-tools.js
+          grep -q 'studio_overview' dist/site-assets/vfiscal-studio-overview.js
+          grep -q 'Panoramica dello Studio' dist/site-assets/vfiscal-studio-overview.js
+          grep -q 'vf-studio-admin-signed-out' dist/site-assets/vfiscal-studio-overview.js
       - name: Verify redesigned dashboard and fiscal data
         run: |
           node --check site-assets/vfiscal-dashboard-v3.js
@@ -140,6 +151,29 @@ jobs:
           done
           echo "New multi-year simulator not yet visible in production"
           exit 1
+      - name: Verify studio overview deployed publicly but data private
+        run: |
+          for attempt in $(seq 1 24); do
+            curl -fsSL --max-time 12 https://www.virgaconsulting.it/vfiscal-admin.html > /tmp/vfo-live.html || true
+            curl -fsSL --max-time 12 https://www.virgaconsulting.it/site-assets/vfiscal-studio-overview.js > /tmp/vfo-live.js || true
+            curl -fsSL --max-time 12 https://www.virgaconsulting.it/site-assets/vfiscal-studio-overview.css > /tmp/vfo-live.css || true
+            if grep -q 'vfiscal-studio-overview.js' /tmp/vfo-live.html &&
+               grep -q 'studio_overview' /tmp/vfo-live.js &&
+               grep -q '#vf-studio-overview' /tmp/vfo-live.css; then
+              echo 'Studio aggregate overview is published.'
+              break
+            fi
+            if [ "$attempt" -eq 24 ]; then echo "Studio overview not live"; exit 1; fi
+            sleep 8
+          done
+          result="$(curl --silent --output /tmp/vfo-unauth.json --write-out '%{http_code}' --max-time 12 \
+            -X POST 'https://kytgwujzjahatblrkhgh.supabase.co/functions/v1/vfiscal-admin-clients' \
+            -H 'Origin: https://www.virgaconsulting.it' \
+            -H 'Content-Type: application/json' \
+            -H 'apikey: sb_publishable_YqARTOD7oZD5Rg2vu6salQ_jGoGhHzY' \
+            --data '{"action":"studio_overview","year":2026}')"
+          test "$result" = "401" || test "$result" = "403"
+          echo "Anonymous access refused ($result)."
       - name: Verify paid-only registration
         run: |
           app="$(curl --fail --silent --show-error --location https://www.virgaconsulting.it/vfiscal-app)"
