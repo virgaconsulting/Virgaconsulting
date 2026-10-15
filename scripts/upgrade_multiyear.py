@@ -192,11 +192,14 @@ replace_function("runReceiptScenario","""function runReceiptScenario(){
       const amount=document.createElement('strong');amount.textContent=value;amount.style.whiteSpace='nowrap';
       div.append(label,amount);box.appendChild(div);
     }
+    const customScheme=input.socialSecurity?.scheme==='custom';
+    const socialMissing=customScheme&&!Number(input.socialSecurity?.customEstimatedCurrentYear||0);
+    const ineligible=status==='immediate_exit';
     line('Incassi annui simulati',eur(after.income.totalReceipts));
-    line('Imposta aggiuntiva stimata',eur(dt));
-    line('Contributi aggiuntivi stimati',eur(dc));
-    line('Da accantonare su questo incasso',eur(delta));
-    if(status!=='immediate_exit')line('Resta dall’incasso, prima delle spese',eur(net));
+    line('Imposta aggiuntiva stimata',ineligible?'Non determinabile nel forfettario':eur(dt));
+    line('Contributi aggiuntivi stimati',ineligible?'Da verificare':socialMissing?'Da completare':eur(dc));
+    line('Da accantonare su questo incasso',ineligible||socialMissing?'Da verificare':eur(delta));
+    if(!ineligible&&!socialMissing)line('Resta dall’incasso, prima delle spese',eur(net));
     line('Margine sul limite',limit===null?'Da verificare':eur(Math.max(0,limit-after.income.totalReceipts)));
     const note=document.createElement('p');note.style.cssText='font-size:12px;line-height:1.5;color:#657a99;margin:12px 0 0';
     const warning=status==='immediate_exit'?'ATTENZIONE: oltre 100.000 € il regime può cessare immediatamente: il calcolo sostitutivo non rappresenta l’imposta finale.':
@@ -204,7 +207,7 @@ replace_function("runReceiptScenario","""function runReceiptScenario(){
       'Nessun incasso viene registrato.';
     note.textContent=warning+
       ' Il netto è prima dei costi dell’attività. I contributi deducibili sono quelli realmente versati, non quelli soltanto stimati.'+
-      (vfIsFutureFiscalEstimate(year)?' Parametri '+year+' provvisori, su base 2026.':'');
+      (vfIsFutureFiscalEstimate(year)?' Parametri '+year+' provvisori, su base 2026.':'')+\n      (customScheme?' Previdenza Cassa professionale: il calcolo dipende dalle regole della Cassa e dall’importo inserito nel profilo.':'');
     box.appendChild(note);
   }catch(e){box.style.display='block';box.textContent='Simulazione non disponibile: '+e.message}
 }""")
