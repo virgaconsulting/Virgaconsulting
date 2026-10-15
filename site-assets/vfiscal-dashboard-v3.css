@@ -70,3 +70,5 @@
 #dashPanelPayments .v4-pay-card{padding:17px}}
 @media(max-width:460px){#vf-dashboard-v3 .v4-value{font-size:27px}#vf-dashboard-v3 .v4-hero strong{font-size:33px}
 #vf-dashboard-v3 .v4-split{font-size:12px}}
+
+#dashPanelPayments .v4-pay-line[hidden]{display:none!important}
