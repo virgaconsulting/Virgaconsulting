@@ -125,6 +125,21 @@ jobs:
           curl --fail --silent --show-error --location https://www.virgaconsulting.it/acquista | grep -q "Inizia il tuo anno con vFiscal"
           curl --fail --silent --show-error --location https://www.virgaconsulting.it/sw.js | grep -q "vfiscal-cloudflare-v2.8.2-20261005"
 
+      - name: Verify live multi-year simulator published
+        run: |
+          set -e
+          for attempt in $(seq 1 25); do
+            curl --fail --silent --show-error --location --max-time 12 https://www.virgaconsulting.it/vfiscal-app.html > /tmp/vf-multiyear-live.html || true
+            if grep -q 'function vfRulesForYear(year)' /tmp/vf-multiyear-live.html &&
+               grep -q 'Da accantonare su questo incasso' /tmp/vf-multiyear-live.html &&
+               grep -q 'PREVISIONE-CON-REGOLE-2026' /tmp/vf-multiyear-live.html; then
+              echo "Confirmed latest multi-year fiscal simulator is live."
+              exit 0
+            fi
+            sleep 8
+          done
+          echo "New multi-year simulator not yet visible in production"
+          exit 1
       - name: Verify paid-only registration
         run: |
           app="$(curl --fail --silent --show-error --location https://www.virgaconsulting.it/vfiscal-app)"
