@@ -126,7 +126,7 @@ old="""  // Calcola prima il 2026: il calendario saldo/acconti dipende dal risul
 prefix=old
 if s.count(prefix)!=1:raise SystemExit("Dashboard calculation entrypoint not found")
 line_start=s.index(prefix)
-line_end=s.index("\n",line_start)
+line_end=s.index("\n",line_start+len(prefix))
 replacement="""  const currentYearResult=vfCalculateSelected();
   const future=document.getElementById('futureYearNotice');
   if(future){
