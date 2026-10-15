@@ -207,7 +207,8 @@ replace_function("runReceiptScenario","""function runReceiptScenario(){
       'Nessun incasso viene registrato.';
     note.textContent=warning+
       ' Il netto è prima dei costi dell’attività. I contributi deducibili sono quelli realmente versati, non quelli soltanto stimati.'+
-      (vfIsFutureFiscalEstimate(year)?' Parametri '+year+' provvisori, su base 2026.':'')+\n      (customScheme?' Previdenza Cassa professionale: il calcolo dipende dalle regole della Cassa e dall’importo inserito nel profilo.':'');
+      (vfIsFutureFiscalEstimate(year)?' Parametri '+year+' provvisori, su base 2026.':'')+
+      (customScheme?' Previdenza Cassa professionale: il calcolo dipende dalle regole della Cassa e dall’importo inserito nel profilo.':'');
     box.appendChild(note);
   }catch(e){box.style.display='block';box.textContent='Simulazione non disponibile: '+e.message}
 }""")
