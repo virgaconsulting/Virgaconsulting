@@ -1,0 +1,44 @@
+#vf-studio-overview{display:none;background:#fff;border:1px solid #e2e9f2;border-radius:16px;padding:23px;margin:18px 0 24px;box-shadow:0 6px 24px #183d6509;color:#18385f;font-family:Inter,system-ui,sans-serif}
+#vf-studio-overview *{box-sizing:border-box}
+#vf-studio-overview h2{margin:0 0 6px;font-size:23px;color:#133a70}
+#vf-studio-overview h3{margin:0 0 7px;font-size:17px;color:#193b67}
+#vf-studio-overview p{margin:0;color:#6b7f99;font-size:12px;line-height:1.55}
+#vf-studio-overview .vfo-head,#vf-studio-overview .vfo-heading{display:flex;justify-content:space-between;gap:12px;align-items:start;flex-wrap:wrap}
+#vf-studio-overview .vfo-controls{display:flex;gap:8px;flex-wrap:wrap}
+#vf-studio-overview select,#vf-studio-overview button{padding:9px 11px;border-radius:9px;font-weight:700;font-size:12px}
+#vf-studio-overview select{border:1px solid #dce6f3;background:#f6f9fe;color:#25446c}
+#vf-studio-overview button{cursor:pointer;background:#eaf3ff;border:1px solid #cce0fa;color:#125ab4}
+#vf-studio-overview .vfo-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
+#vf-studio-overview .vfo-metric{border:1px solid #e3ebf5;background:#f9fbfe;padding:16px;border-radius:12px;min-width:0}
+#vf-studio-overview .vfo-metric b{display:block;font-size:11px;color:#70839d}
+#vf-studio-overview .vfo-metric strong{display:block;font-size:24px;margin:7px 0;letter-spacing:-.03em;color:#173e70;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#vf-studio-overview .vfo-metric small{font-size:11px;color:#6f819a;line-height:1.4}
+#vf-studio-overview .vfo-metric.blue strong{color:#1263e3}
+#vf-studio-overview .vfo-metric.green strong{color:#129665}
+#vf-studio-overview .vfo-coverage{background:#f1f6fd;padding:13px;border-radius:11px;color:#446382;font-size:12px;margin:12px 0 18px;line-height:1.5}
+#vf-studio-overview .vfo-coverage strong{color:#234e7e}
+#vf-studio-overview .vfo-card{border:1px solid #e3eaf4;border-radius:13px;padding:17px;margin-top:14px}
+#vf-studio-overview .vfo-filter{display:flex;gap:5px;flex-wrap:wrap}
+#vf-studio-overview .vfo-filter button{background:#f5f8fd;border-color:#e2eaf4;color:#4a6584}
+#vf-studio-overview .vfo-filter button.active{background:#1266e4;color:#fff;border-color:#1266e4}
+#vf-studio-overview .vfo-legend{font-size:11px;color:#5a7392;margin:12px 0 0}
+#vf-studio-overview .vfo-legend span{display:inline-block;margin-right:14px}
+#vf-studio-overview .vfo-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;background:#3386e5}
+#vf-studio-overview .vfo-legend i.green{background:#24b17d}
+#vf-studio-overview .vfo-chart{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:7px;height:168px;margin:12px 0 3px;padding:0 4px;border-bottom:1px solid #e1e9f3;align-items:end}
+#vf-studio-overview .vfo-month{height:100%;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:5px}
+#vf-studio-overview .vfo-bar{width:100%;max-width:30px;display:flex;flex-direction:column-reverse;overflow:hidden;border-radius:4px 4px 0 0}
+#vf-studio-overview .vfo-bar i{display:block;width:100%;background:#398bea}
+#vf-studio-overview .vfo-bar i.green{background:#24b17d}
+#vf-studio-overview .vfo-month small{font-size:10px;color:#657d9a}
+#vf-studio-overview .vfo-empty{background:#f5f9fe;border:1px dashed #d9e4f1;border-radius:10px;padding:30px 16px;text-align:center;color:#66809d;font-size:12px;line-height:1.6}
+#vf-studio-overview .vfo-table-wrap{max-height:350px;overflow:auto;border:1px solid #e4ebf4;border-radius:10px;margin-top:13px}
+#vf-studio-overview table{border-collapse:collapse;width:100%;min-width:630px;font-size:12px}
+#vf-studio-overview th,#vf-studio-overview td{padding:10px 11px;border-bottom:1px solid #edf1f7;text-align:left}
+#vf-studio-overview th{background:#f6f9fe;color:#617997;position:sticky;top:0}
+#vf-studio-overview td{color:#253f62}
+#vf-studio-overview td.amount,#vf-studio-overview th.amount{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+#vf-studio-overview .vfo-note{font-size:11px;margin-top:12px;color:#7087a3}
+#vf-studio-overview .vfo-error{color:#a63946;margin:8px 0}
+@media(max-width:760px){#vf-studio-overview .vfo-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:450px){#vf-studio-overview{padding:13px}#vf-studio-overview .vfo-metric{padding:11px}#vf-studio-overview .vfo-metric strong{font-size:18px}#vf-studio-overview .vfo-chart{gap:3px}#vf-studio-overview h2{font-size:20px}}
