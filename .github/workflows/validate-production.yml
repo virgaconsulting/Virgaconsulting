@@ -23,6 +23,8 @@ jobs:
         run: bash build.sh
       - name: Inspect multi-year engine before upgrade
         run: python3 scripts/inspect_multiyear.py
+      - name: Test fiscal calculations for multiple annualities
+        run: node scripts/test_vfiscal_multiyear.cjs
       - name: Verify direct 5% and 15% selection
         run: |
           python3 - <<'PY'
